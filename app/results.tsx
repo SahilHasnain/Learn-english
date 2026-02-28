@@ -1,12 +1,16 @@
-import { isWordSaved, saveWord } from "@/services/storageService";
+import {
+  fixEnglishMistakes,
+  predictConversationFlow,
+} from "@/services/groqService";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
-  Alert,
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -16,50 +20,65 @@ interface WordSuggestion {
   word: string;
   level: "beginner" | "intermediate" | "advanced";
   sentence: string;
+  conversationStarters: string[];
+}
+
+interface ConversationFlow {
+  theirResponse: string;
+  yourFollowUp: string;
+}
+
+interface MistakeFix {
+  original: string;
+  corrected: string;
+  explanation: string;
 }
 
 export default function ResultsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const [expandedStarter, setExpandedStarter] = useState<string | null>(null);
+  const [conversationFlows, setConversationFlows] = useState<
+    Record<string, ConversationFlow[]>
+  >({});
+  const [loadingStarter, setLoadingStarter] = useState<string | null>(null);
+  const [userInput, setUserInput] = useState("");
+  const [mistakeFix, setMistakeFix] = useState<MistakeFix | null>(null);
+  const [isFixing, setIsFixing] = useState(false);
 
   const suggestions: WordSuggestion[] = params.suggestions
     ? JSON.parse(params.suggestions as string)
     : [];
 
-  const [savedStates, setSavedStates] = useState<{ [key: string]: boolean }>(
-    {},
-  );
+  const handlePredictResponse = async (starter: string) => {
+    if (conversationFlows[starter]) {
+      setExpandedStarter(expandedStarter === starter ? null : starter);
+      return;
+    }
 
-  useEffect(() => {
-    // Check which words are already saved
-    const checkSavedWords = async () => {
-      const states: { [key: string]: boolean } = {};
-      for (const suggestion of suggestions) {
-        states[suggestion.word] = await isWordSaved(suggestion.word);
-      }
-      setSavedStates(states);
-    };
-    checkSavedWords();
-  }, []);
-
-  const handleSave = async (
-    word: string,
-    level: "beginner" | "intermediate" | "advanced",
-    sentence: string,
-  ) => {
+    setLoadingStarter(starter);
     try {
-      const success = await saveWord(word, level, sentence);
-      if (success) {
-        setSavedStates((prev) => ({ ...prev, [word]: true }));
-        Alert.alert("Success", `"${word}" has been saved to your collection!`);
-      } else {
-        Alert.alert(
-          "Already Saved",
-          `"${word}" is already in your collection.`,
-        );
-      }
+      const flows = await predictConversationFlow(starter);
+      setConversationFlows((prev) => ({ ...prev, [starter]: flows }));
+      setExpandedStarter(starter);
     } catch (error) {
-      Alert.alert("Error", "Failed to save the word. Please try again.");
+      console.error("Error predicting conversation:", error);
+    } finally {
+      setLoadingStarter(null);
+    }
+  };
+
+  const handleFixMistakes = async () => {
+    if (!userInput.trim()) return;
+
+    setIsFixing(true);
+    try {
+      const fix = await fixEnglishMistakes(userInput);
+      setMistakeFix(fix);
+    } catch (error) {
+      console.error("Error fixing mistakes:", error);
+    } finally {
+      setIsFixing(false);
     }
   };
 
@@ -98,6 +117,58 @@ export default function ResultsScreen() {
           </Text>
         </View>
 
+        <View style={styles.mistakeFixerCard}>
+          <View style={styles.mistakeFixerHeader}>
+            <Ionicons name="create" size={20} color="#8B5CF6" />
+            <Text style={styles.mistakeFixerTitle}>Practice Your English</Text>
+          </View>
+          <Text style={styles.mistakeFixerSubtitle}>
+            Type what you want to say, and I'll help make it sound natural
+          </Text>
+          <TextInput
+            style={styles.textInput}
+            placeholder="e.g., I want go to store buy milk..."
+            placeholderTextColor="#9CA3AF"
+            value={userInput}
+            onChangeText={setUserInput}
+            multiline
+          />
+          <TouchableOpacity
+            onPress={handleFixMistakes}
+            disabled={!userInput.trim() || isFixing}
+            style={[
+              styles.fixButton,
+              (!userInput.trim() || isFixing) && styles.fixButtonDisabled,
+            ]}
+          >
+            {isFixing ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <>
+                <Ionicons name="sparkles" size={18} color="white" />
+                <Text style={styles.fixButtonText}>Fix My English</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {mistakeFix && (
+            <View style={styles.fixResultContainer}>
+              <View style={styles.fixResultBox}>
+                <Text style={styles.fixResultLabel}>
+                  ✨ Better way to say it:
+                </Text>
+                <Text style={styles.fixResultText}>{mistakeFix.corrected}</Text>
+              </View>
+              <View style={styles.explanationBox}>
+                <Text style={styles.explanationLabel}>💡 Why:</Text>
+                <Text style={styles.explanationText}>
+                  {mistakeFix.explanation}
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+
         {suggestions.map((item, index) => (
           <View key={index} style={styles.card}>
             <View style={styles.cardHeader}>
@@ -113,39 +184,75 @@ export default function ResultsScreen() {
             </View>
             <Text style={styles.sentenceText}>{item.sentence}</Text>
 
-            <View style={styles.cardFooter}>
-              <TouchableOpacity style={styles.actionButton}>
-                <Ionicons
-                  name="volume-high-outline"
-                  size={20}
-                  color="#3B82F6"
-                />
-                <Text style={styles.actionButtonText}>Listen</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  savedStates[item.word] && styles.savedButton,
-                ]}
-                onPress={() => handleSave(item.word, item.level, item.sentence)}
-                disabled={savedStates[item.word]}
-              >
-                <Ionicons
-                  name={
-                    savedStates[item.word] ? "bookmark" : "bookmark-outline"
-                  }
-                  size={20}
-                  color={savedStates[item.word] ? "#10B981" : "#3B82F6"}
-                />
-                <Text
-                  style={[
-                    styles.actionButtonText,
-                    savedStates[item.word] && styles.savedButtonText,
-                  ]}
-                >
-                  {savedStates[item.word] ? "Saved" : "Save"}
+            <View style={styles.conversationSection}>
+              <View style={styles.conversationHeader}>
+                <Ionicons name="chatbubbles" size={18} color="#3B82F6" />
+                <Text style={styles.conversationTitle}>
+                  Conversation Starters
                 </Text>
-              </TouchableOpacity>
+              </View>
+              {item.conversationStarters?.map((starter, idx) => (
+                <View key={idx}>
+                  <View style={styles.starterItem}>
+                    <Text style={styles.starterBullet}>💬</Text>
+                    <Text style={styles.starterText}>{starter}</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => handlePredictResponse(starter)}
+                    style={styles.predictButton}
+                    disabled={loadingStarter === starter}
+                  >
+                    {loadingStarter === starter ? (
+                      <ActivityIndicator size="small" color="#3B82F6" />
+                    ) : (
+                      <>
+                        <Ionicons
+                          name={
+                            expandedStarter === starter
+                              ? "chevron-up"
+                              : "chevron-down"
+                          }
+                          size={16}
+                          color="#3B82F6"
+                        />
+                        <Text style={styles.predictButtonText}>
+                          {conversationFlows[starter]
+                            ? expandedStarter === starter
+                              ? "Hide responses"
+                              : "Show responses"
+                            : "What might they say?"}
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  {expandedStarter === starter &&
+                    conversationFlows[starter] && (
+                      <View style={styles.flowContainer}>
+                        {conversationFlows[starter].map((flow, flowIdx) => (
+                          <View key={flowIdx} style={styles.flowItem}>
+                            <View style={styles.responseBox}>
+                              <Text style={styles.responseLabel}>
+                                They might say:
+                              </Text>
+                              <Text style={styles.responseText}>
+                                {flow.theirResponse}
+                              </Text>
+                            </View>
+                            <View style={styles.followUpBox}>
+                              <Text style={styles.followUpLabel}>
+                                You could reply:
+                              </Text>
+                              <Text style={styles.followUpText}>
+                                {flow.yourFollowUp}
+                              </Text>
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                </View>
+              ))}
             </View>
           </View>
         ))}
@@ -254,31 +361,188 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#374151",
     lineHeight: 24,
-    marginBottom: 16,
   },
-  cardFooter: {
-    flexDirection: "row",
-    gap: 12,
+  conversationSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
   },
-  actionButton: {
+  conversationHeader: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#EFF6FF",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 6,
+    gap: 8,
+    marginBottom: 12,
   },
-  actionButtonText: {
-    color: "#3B82F6",
+  conversationTitle: {
     fontSize: 14,
     fontWeight: "600",
+    color: "#3B82F6",
   },
-  savedButton: {
-    backgroundColor: "#D1FAE5",
+  starterItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 8,
+    gap: 8,
   },
-  savedButtonText: {
-    color: "#10B981",
+  starterBullet: {
+    fontSize: 14,
+    marginTop: 2,
+  },
+  starterText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#6B7280",
+    lineHeight: 20,
+  },
+  predictButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginLeft: 30,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  predictButtonText: {
+    fontSize: 13,
+    color: "#3B82F6",
+    fontWeight: "500",
+  },
+  flowContainer: {
+    marginLeft: 30,
+    marginTop: 8,
+    gap: 12,
+  },
+  flowItem: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 8,
+    padding: 12,
+    gap: 8,
+  },
+  responseBox: {
+    gap: 4,
+  },
+  responseLabel: {
+    fontSize: 11,
+    color: "#6B7280",
+    fontWeight: "600",
+    textTransform: "uppercase",
+  },
+  responseText: {
+    fontSize: 14,
+    color: "#374151",
+    fontStyle: "italic",
+  },
+  followUpBox: {
+    gap: 4,
+  },
+  followUpLabel: {
+    fontSize: 11,
+    color: "#3B82F6",
+    fontWeight: "600",
+    textTransform: "uppercase",
+  },
+  followUpText: {
+    fontSize: 14,
+    color: "#1F2937",
+  },
+  mistakeFixerCard: {
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  mistakeFixerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  mistakeFixerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#8B5CF6",
+  },
+  mistakeFixerSubtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginBottom: 16,
+  },
+  textInput: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 15,
+    color: "#111827",
+    minHeight: 80,
+    textAlignVertical: "top",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    marginBottom: 12,
+  },
+  fixButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#8B5CF6",
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  fixButtonDisabled: {
+    backgroundColor: "#D1D5DB",
+  },
+  fixButtonText: {
+    color: "white",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  fixResultContainer: {
+    marginTop: 16,
+    gap: 12,
+  },
+  fixResultBox: {
+    backgroundColor: "#F0FDF4",
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: "#10B981",
+  },
+  fixResultLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#059669",
+    marginBottom: 8,
+  },
+  fixResultText: {
+    fontSize: 16,
+    color: "#065F46",
+    lineHeight: 24,
+  },
+  explanationBox: {
+    backgroundColor: "#EEF2FF",
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: "#6366F1",
+  },
+  explanationLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#4F46E5",
+    marginBottom: 8,
+  },
+  explanationText: {
+    fontSize: 14,
+    color: "#3730A3",
+    lineHeight: 20,
   },
   bottomBar: {
     padding: 16,
