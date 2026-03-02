@@ -19,6 +19,17 @@ interface MistakeFix {
   explanation: string;
 }
 
+interface RelatedWord {
+  word: string;
+  relation: string;
+  example: string;
+}
+
+interface RelatedWordsCluster {
+  category: string;
+  words: RelatedWord[];
+}
+
 export async function analyzeImageWithGroq(
   base64Image: string,
 ): Promise<WordSuggestion[]> {
@@ -209,6 +220,67 @@ Return ONLY a valid JSON object in this exact format, no other text:
     return JSON.parse(content);
   } catch (error) {
     console.error("Error fixing English mistakes:", error);
+    throw error;
+  }
+}
+
+export async function getRelatedWords(
+  words: string[],
+): Promise<RelatedWordsCluster[]> {
+  if (!GROQ_API_KEY) {
+    throw new Error("GROQ_API_KEY is not configured");
+  }
+
+  try {
+    const response = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "user",
+            content: `Given these words: ${words.join(", ")}
+
+Create 3 semantic clusters of related vocabulary that would help an English learner build deeper understanding. For each cluster, provide 4-5 related words with their relationship to the original words and a simple example.
+
+Return ONLY a valid JSON array in this exact format, no other text:
+[
+  {
+    "category": "Category Name (e.g., 'Actions', 'Physical Properties', 'Related Objects')",
+    "words": [
+      {"word": "related word", "relation": "how it relates (e.g., 'verb form', 'opposite', 'similar object')", "example": "simple example sentence"},
+      {"word": "related word", "relation": "relationship", "example": "example"}
+    ]
+  }
+]
+
+Make the categories practical and useful for real conversations.`,
+          },
+        ],
+        temperature: 0.8,
+        max_tokens: 600,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Groq API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content;
+
+    if (!content) {
+      throw new Error("No content in response");
+    }
+
+    return JSON.parse(content);
+  } catch (error) {
+    console.error("Error getting related words:", error);
     throw error;
   }
 }

@@ -1,10 +1,10 @@
 import EnglishPracticeChat from "@/app/components/EnglishPracticeChat";
-import { predictConversationFlow } from "@/services/groqService";
+import RelatedWordsSection from "@/app/components/RelatedWordsSection";
+import WordCard from "@/app/components/WordCard";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Modal,
   ScrollView,
   StyleSheet,
@@ -21,84 +21,17 @@ interface WordSuggestion {
   conversationStarters: string[];
 }
 
-interface ConversationFlow {
-  theirResponse: string;
-  yourFollowUp: string;
-}
-
 export default function ResultsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const [expandedStarter, setExpandedStarter] = useState<string | null>(null);
-  const [conversationFlows, setConversationFlows] = useState<
-    Record<string, ConversationFlow[]>
-  >({});
-  const [loadingStarter, setLoadingStarter] = useState<string | null>(null);
-  const [flowReactions, setFlowReactions] = useState<
-    Record<string, "up" | "down" | null>
-  >({});
   const [isChatModalVisible, setIsChatModalVisible] = useState(false);
 
-  const suggestions: WordSuggestion[] = params.suggestions
-    ? JSON.parse(params.suggestions as string)
-    : [];
+  const suggestions: WordSuggestion[] = useMemo(
+    () => (params.suggestions ? JSON.parse(params.suggestions as string) : []),
+    [params.suggestions],
+  );
 
-  const handlePredictResponse = async (starter: string) => {
-    if (conversationFlows[starter]) {
-      setExpandedStarter(expandedStarter === starter ? null : starter);
-      return;
-    }
-
-    setLoadingStarter(starter);
-    try {
-      const flows = await predictConversationFlow(starter);
-      setConversationFlows((prev) => ({ ...prev, [starter]: flows }));
-      setExpandedStarter(starter);
-    } catch (error) {
-      console.error("Error predicting conversation:", error);
-    } finally {
-      setLoadingStarter(null);
-    }
-  };
-
-  const handleReaction = (flowKey: string, reaction: "up" | "down") => {
-    setFlowReactions((prev) => ({
-      ...prev,
-      [flowKey]: prev[flowKey] === reaction ? null : reaction,
-    }));
-  };
-
-  const highlightWord = (sentence: string, word: string) => {
-    const regex = new RegExp(`\\b(${word})\\b`, "gi");
-    const parts = sentence.split(regex);
-
-    return (
-      <Text style={styles.sentenceText}>
-        {parts.map((part, index) =>
-          part.toLowerCase() === word.toLowerCase() ? (
-            <Text key={index} style={styles.highlightedWord}>
-              {part}
-            </Text>
-          ) : (
-            part
-          ),
-        )}
-      </Text>
-    );
-  };
-
-  const getLevelGradient = (level: string) => {
-    switch (level) {
-      case "beginner":
-        return ["#10B981", "#059669"];
-      case "intermediate":
-        return ["#F59E0B", "#D97706"];
-      case "advanced":
-        return ["#EF4444", "#DC2626"];
-      default:
-        return ["#6B7280", "#4B5563"];
-    }
-  };
+  const words = useMemo(() => suggestions.map((s) => s.word), [suggestions]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -127,176 +60,18 @@ export default function ResultsScreen() {
           </View>
         </View>
 
-        {suggestions.map((item, index) => {
-          const [gradientStart] = getLevelGradient(item.level);
-          return (
-            <View key={index} style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.wordContainer}>
-                  <Ionicons name="book-outline" size={20} color="#3B82F6" />
-                  <Text style={styles.wordText}>{item.word}</Text>
-                </View>
-                <View
-                  style={[
-                    styles.levelBadge,
-                    { backgroundColor: gradientStart },
-                  ]}
-                >
-                  <Text style={styles.levelText}>{item.level}</Text>
-                </View>
-              </View>
+        <RelatedWordsSection words={words} />
 
-              <View style={styles.sentenceContainer}>
-                <Ionicons
-                  name="chatbox-ellipses-outline"
-                  size={16}
-                  color="#9CA3AF"
-                  style={styles.quoteIcon}
-                />
-                {highlightWord(item.sentence, item.word)}
-              </View>
+        {suggestions.map((item, index) => (
+          <WordCard
+            key={index}
+            word={item.word}
+            level={item.level}
+            sentence={item.sentence}
+            conversationStarters={item.conversationStarters}
+          />
+        ))}
 
-              <View style={styles.conversationSection}>
-                <View style={styles.conversationHeader}>
-                  <Ionicons name="chatbubbles" size={20} color="#3B82F6" />
-                  <Text style={styles.conversationTitle}>
-                    Start a Conversation
-                  </Text>
-                </View>
-                {item.conversationStarters?.map((starter, idx) => (
-                  <View key={idx} style={styles.starterWrapper}>
-                    <TouchableOpacity
-                      onPress={() => handlePredictResponse(starter)}
-                      style={styles.starterCard}
-                      disabled={loadingStarter === starter}
-                    >
-                      <View style={styles.starterContent}>
-                        <View style={styles.starterIconContainer}>
-                          <Ionicons
-                            name="chatbubble-ellipses"
-                            size={18}
-                            color="#3B82F6"
-                          />
-                        </View>
-                        <Text style={styles.starterText}>{starter}</Text>
-                      </View>
-                      {loadingStarter === starter ? (
-                        <ActivityIndicator size="small" color="#3B82F6" />
-                      ) : (
-                        <Ionicons
-                          name={
-                            expandedStarter === starter
-                              ? "chevron-up-circle"
-                              : "chevron-down-circle"
-                          }
-                          size={24}
-                          color="#3B82F6"
-                        />
-                      )}
-                    </TouchableOpacity>
-
-                    {expandedStarter === starter &&
-                      conversationFlows[starter] && (
-                        <View style={styles.flowContainer}>
-                          {conversationFlows[starter].map((flow, flowIdx) => {
-                            const flowKey = `${starter}-${flowIdx}`;
-                            return (
-                              <View key={flowIdx} style={styles.flowItem}>
-                                <View style={styles.responseBox}>
-                                  <View style={styles.flowLabelContainer}>
-                                    <Ionicons
-                                      name="person"
-                                      size={14}
-                                      color="#6366F1"
-                                    />
-                                    <Text style={styles.responseLabel}>
-                                      They might say
-                                    </Text>
-                                  </View>
-                                  <Text style={styles.responseText}>
-                                    {flow.theirResponse}
-                                  </Text>
-                                </View>
-                                <View style={styles.flowArrow}>
-                                  <Ionicons
-                                    name="arrow-down"
-                                    size={16}
-                                    color="#9CA3AF"
-                                  />
-                                </View>
-                                <View style={styles.followUpBox}>
-                                  <View style={styles.flowLabelContainer}>
-                                    <Ionicons
-                                      name="person-circle"
-                                      size={14}
-                                      color="#10B981"
-                                    />
-                                    <Text style={styles.followUpLabel}>
-                                      You could reply
-                                    </Text>
-                                  </View>
-                                  <Text style={styles.followUpText}>
-                                    {flow.yourFollowUp}
-                                  </Text>
-                                </View>
-                                <View style={styles.reactionContainer}>
-                                  <Text style={styles.reactionPrompt}>
-                                    Helpful?
-                                  </Text>
-                                  <View style={styles.reactionButtons}>
-                                    <TouchableOpacity
-                                      onPress={() =>
-                                        handleReaction(flowKey, "up")
-                                      }
-                                      style={[
-                                        styles.reactionButton,
-                                        flowReactions[flowKey] === "up" &&
-                                          styles.reactionButtonActive,
-                                      ]}
-                                    >
-                                      <Text
-                                        style={[
-                                          styles.reactionEmoji,
-                                          flowReactions[flowKey] === "up" &&
-                                            styles.reactionEmojiActive,
-                                        ]}
-                                      >
-                                        👍
-                                      </Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                      onPress={() =>
-                                        handleReaction(flowKey, "down")
-                                      }
-                                      style={[
-                                        styles.reactionButton,
-                                        flowReactions[flowKey] === "down" &&
-                                          styles.reactionButtonActive,
-                                      ]}
-                                    >
-                                      <Text
-                                        style={[
-                                          styles.reactionEmoji,
-                                          flowReactions[flowKey] === "down" &&
-                                            styles.reactionEmojiActive,
-                                        ]}
-                                      >
-                                        👎
-                                      </Text>
-                                    </TouchableOpacity>
-                                  </View>
-                                </View>
-                              </View>
-                            );
-                          })}
-                        </View>
-                      )}
-                  </View>
-                ))}
-              </View>
-            </View>
-          );
-        })}
         <View style={styles.bottomPadding} />
       </ScrollView>
 
@@ -416,221 +191,6 @@ const styles = StyleSheet.create({
     color: "#059669",
     textTransform: "uppercase",
     letterSpacing: 0.5,
-  },
-  card: {
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  wordContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  wordText: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-  levelBadge: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  levelText: {
-    color: "white",
-    fontSize: 11,
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  sentenceContainer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    backgroundColor: "#F9FAFB",
-    padding: 16,
-    borderRadius: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: "#3B82F6",
-  },
-  quoteIcon: {
-    marginTop: 2,
-  },
-  sentenceText: {
-    flex: 1,
-    fontSize: 16,
-    color: "#374151",
-    lineHeight: 26,
-  },
-  highlightedWord: {
-    fontWeight: "700",
-    color: "#2563EB",
-    backgroundColor: "#DBEAFE",
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  conversationSection: {
-    marginTop: 24,
-    paddingTop: 24,
-    borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
-  },
-  conversationHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 16,
-  },
-  conversationTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#3B82F6",
-  },
-  starterWrapper: {
-    marginBottom: 12,
-  },
-  starterCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#F8FAFC",
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  starterContent: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  starterIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#DBEAFE",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  starterText: {
-    flex: 1,
-    fontSize: 15,
-    color: "#1E293B",
-    lineHeight: 22,
-    fontWeight: "500",
-  },
-  flowContainer: {
-    marginTop: 12,
-    gap: 16,
-  },
-  flowItem: {
-    backgroundColor: "#FAFAFA",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  responseBox: {
-    gap: 8,
-  },
-  flowLabelContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  responseLabel: {
-    fontSize: 12,
-    color: "#6366F1",
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  responseText: {
-    fontSize: 15,
-    color: "#475569",
-    fontStyle: "italic",
-    lineHeight: 22,
-    paddingLeft: 20,
-  },
-  flowArrow: {
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  followUpBox: {
-    gap: 8,
-  },
-  followUpLabel: {
-    fontSize: 12,
-    color: "#10B981",
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  followUpText: {
-    fontSize: 15,
-    color: "#1F2937",
-    lineHeight: 22,
-    fontWeight: "500",
-    paddingLeft: 20,
-  },
-  reactionContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-  },
-  reactionPrompt: {
-    fontSize: 13,
-    color: "#6B7280",
-    fontWeight: "500",
-  },
-  reactionButtons: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  reactionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#F3F4F6",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  reactionButtonActive: {
-    backgroundColor: "#DBEAFE",
-    borderColor: "#3B82F6",
-  },
-  reactionEmoji: {
-    fontSize: 20,
-    opacity: 0.4,
-  },
-  reactionEmojiActive: {
-    opacity: 1,
   },
   bottomPadding: {
     height: 80,
