@@ -6,6 +6,7 @@ interface WordSuggestion {
   level: "beginner" | "intermediate" | "advanced";
   sentence: string;
   conversationStarters: string[];
+  urduMeaning: string;
 }
 
 interface ConversationFlow {
@@ -23,6 +24,7 @@ interface RelatedWord {
   word: string;
   relation: string;
   example: string;
+  urduMeaning: string;
 }
 
 interface RelatedWordsCluster {
@@ -66,13 +68,19 @@ export async function analyzeImageWithGroq(
             content: [
               {
                 type: "text",
-                text: `Analyze this image and identify the main object. Then provide exactly 3 English vocabulary words related to this object at different difficulty levels (beginner, intermediate, advanced). For each word, create a natural example sentence AND 3 conversation starters that someone could actually use in real life when talking about this object.
+                text: `Analyze this image and identify the main object. Then provide exactly 3 English vocabulary words related to this object at different difficulty levels (beginner, intermediate, advanced). For each word, create a natural example sentence AND 3 conversation starters that someone could actually use in real life when talking about this object. Also provide the Roman Urdu (Urdu written in English letters) translation for each word - use SIMPLE, COMMON Urdu words that everyday people use in conversation, NOT formal or literary Urdu.
+
+Examples of good translations:
+- cup → "pyala" (not "piyala-e-chai")
+- book → "kitab" (not "mutalea")
+- water → "pani" (not "aab")
+- food → "khana" (not "ghiza")
 
 Return ONLY a valid JSON array in this exact format, no other text:
 [
-  {"word": "word1", "level": "beginner", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"]},
-  {"word": "word2", "level": "intermediate", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"]},
-  {"word": "word3", "level": "advanced", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"]}
+  {"word": "word1", "level": "beginner", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"], "urduMeaning": "simple urdu word"},
+  {"word": "word2", "level": "intermediate", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"], "urduMeaning": "simple urdu word"},
+  {"word": "word3", "level": "advanced", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"], "urduMeaning": "simple urdu word"}
 ]`,
               },
               {
@@ -245,15 +253,21 @@ export async function getRelatedWords(
             role: "user",
             content: `Given these words: ${words.join(", ")}
 
-Create 3 semantic clusters of related vocabulary that would help an English learner build deeper understanding. For each cluster, provide 4-5 related words with their relationship to the original words and a simple example.
+Create 3 semantic clusters of related vocabulary that would help an English learner build deeper understanding. For each cluster, provide 4-5 related words with their relationship to the original words, a simple example, and the Roman Urdu (Urdu written in English letters) translation - use SIMPLE, COMMON Urdu words that everyday people use in conversation, NOT formal or literary Urdu.
+
+Examples of good translations:
+- hot → "garam" (not "taptaa")
+- cold → "thanda" (not "sard")
+- big → "bada" (not "azeem")
+- small → "chota" (not "laghu")
 
 Return ONLY a valid JSON array in this exact format, no other text:
 [
   {
     "category": "Category Name (e.g., 'Actions', 'Physical Properties', 'Related Objects')",
     "words": [
-      {"word": "related word", "relation": "how it relates (e.g., 'verb form', 'opposite', 'similar object')", "example": "simple example sentence"},
-      {"word": "related word", "relation": "relationship", "example": "example"}
+      {"word": "related word", "relation": "how it relates (e.g., 'verb form', 'opposite', 'similar object')", "example": "simple example sentence", "urduMeaning": "simple urdu word"},
+      {"word": "related word", "relation": "relationship", "example": "example", "urduMeaning": "simple urdu word"}
     ]
   }
 ]
@@ -262,7 +276,7 @@ Make the categories practical and useful for real conversations.`,
           },
         ],
         temperature: 0.8,
-        max_tokens: 600,
+        max_tokens: 800,
       }),
     });
 
@@ -278,7 +292,27 @@ Make the categories practical and useful for real conversations.`,
       throw new Error("No content in response");
     }
 
-    return JSON.parse(content);
+    console.log("Related words raw content:", content);
+
+    // Clean up the content - remove markdown code blocks if present
+    let cleanContent = content.trim();
+    if (cleanContent.startsWith("```json")) {
+      cleanContent = cleanContent
+        .replace(/```json\n?/g, "")
+        .replace(/```\n?/g, "");
+    } else if (cleanContent.startsWith("```")) {
+      cleanContent = cleanContent.replace(/```\n?/g, "");
+    }
+
+    // Try to find JSON array in the content
+    const jsonMatch = cleanContent.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      cleanContent = jsonMatch[0];
+    }
+
+    console.log("Cleaned content:", cleanContent);
+
+    return JSON.parse(cleanContent);
   } catch (error) {
     console.error("Error getting related words:", error);
     throw error;

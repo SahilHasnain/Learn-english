@@ -8,6 +8,7 @@ interface WordCardProps {
   level: "beginner" | "intermediate" | "advanced";
   sentence: string;
   conversationStarters: string[];
+  urduMeaning: string;
 }
 
 export default function WordCard({
@@ -15,6 +16,7 @@ export default function WordCard({
   level,
   sentence,
   conversationStarters,
+  urduMeaning,
 }: WordCardProps) {
   const [expandedStarter, setExpandedStarter] = useState<string | null>(null);
 
@@ -55,7 +57,10 @@ export default function WordCard({
       <View style={styles.cardHeader}>
         <View style={styles.wordContainer}>
           <Ionicons name="book-outline" size={20} color="#3B82F6" />
-          <Text style={styles.wordText}>{word}</Text>
+          <View>
+            <Text style={styles.wordText}>{word}</Text>
+            <Text style={styles.urduMeaning}>{urduMeaning}</Text>
+          </View>
         </View>
         <View
           style={[
@@ -124,6 +129,12 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     color: "#111827",
+  },
+  urduMeaning: {
+    fontSize: 14,
+    color: "#6B7280",
+    fontStyle: "italic",
+    marginTop: 2,
   },
   levelBadge: {
     paddingHorizontal: 14,

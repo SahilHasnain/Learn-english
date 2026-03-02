@@ -13,6 +13,7 @@ interface RelatedWord {
   word: string;
   relation: string;
   example: string;
+  urduMeaning: string;
 }
 
 interface RelatedWordsCluster {
@@ -38,6 +39,8 @@ export default function RelatedWordsSection({
       setClusters(result);
     } catch (error) {
       console.error("Error loading related words:", error);
+      // Silently fail - don't show error to user, just don't display the section
+      setClusters([]);
     } finally {
       setLoading(false);
     }
@@ -88,9 +91,14 @@ export default function RelatedWordsSection({
                 {cluster.words.map((relatedWord, wordIdx) => (
                   <View key={wordIdx} style={styles.relatedWordItem}>
                     <View style={styles.relatedWordHeader}>
-                      <Text style={styles.relatedWordText}>
-                        {relatedWord.word}
-                      </Text>
+                      <View style={styles.wordWithTranslation}>
+                        <Text style={styles.relatedWordText}>
+                          {relatedWord.word}
+                        </Text>
+                        <Text style={styles.urduMeaning}>
+                          {relatedWord.urduMeaning}
+                        </Text>
+                      </View>
                       <View style={styles.relationBadge}>
                         <Text style={styles.relationText}>
                           {relatedWord.relation}
@@ -198,10 +206,18 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 8,
   },
+  wordWithTranslation: {
+    gap: 2,
+  },
   relatedWordText: {
     fontSize: 16,
     fontWeight: "700",
     color: "#111827",
+  },
+  urduMeaning: {
+    fontSize: 13,
+    color: "#6B7280",
+    fontStyle: "italic",
   },
   relationBadge: {
     backgroundColor: "#F3E8FF",

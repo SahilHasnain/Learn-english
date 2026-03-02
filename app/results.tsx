@@ -19,6 +19,7 @@ interface WordSuggestion {
   level: "beginner" | "intermediate" | "advanced";
   sentence: string;
   conversationStarters: string[];
+  urduMeaning: string;
 }
 
 export default function ResultsScreen() {
@@ -69,6 +70,7 @@ export default function ResultsScreen() {
             level={item.level}
             sentence={item.sentence}
             conversationStarters={item.conversationStarters}
+            urduMeaning={item.urduMeaning}
           />
         ))}
 
