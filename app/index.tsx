@@ -33,9 +33,7 @@ export default function Index() {
   return (
     <View className="flex-1 justify-center items-center bg-gradient-to-b from-blue-50 to-white px-6">
       <Ionicons name="book" size={80} color="#3B82F6" />
-      <Text className="text-4xl font-bold text-gray-900 mt-6">
-        English Learning
-      </Text>
+      <Text className="text-4xl font-bold text-gray-900 mt-6">ScanLearn</Text>
       <Text className="text-gray-600 text-center mt-3 mb-8">
         Learn vocabulary from the world around you
       </Text>
