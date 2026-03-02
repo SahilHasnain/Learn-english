@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "naat-collection",
-    "slug": "naat-collection",
+    "name": "Learn English",
+    "slug": "learn-english",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
