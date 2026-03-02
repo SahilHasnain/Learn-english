@@ -13,7 +13,7 @@ interface RelatedWord {
   word: string;
   relation: string;
   example: string;
-  urduMeaning: string;
+  hindiMeaning: string;
 }
 
 interface RelatedWordsCluster {
@@ -95,8 +95,8 @@ export default function RelatedWordsSection({
                         <Text style={styles.relatedWordText}>
                           {relatedWord.word}
                         </Text>
-                        <Text style={styles.urduMeaning}>
-                          {relatedWord.urduMeaning}
+                        <Text style={styles.hindiMeaning}>
+                          {relatedWord.hindiMeaning}
                         </Text>
                       </View>
                       <View style={styles.relationBadge}>
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#111827",
   },
-  urduMeaning: {
+  hindiMeaning: {
     fontSize: 13,
     color: "#6B7280",
     fontStyle: "italic",

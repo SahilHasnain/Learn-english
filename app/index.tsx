@@ -1,7 +1,8 @@
 import EnglishPracticeChat from "@/app/components/EnglishPracticeChat";
+import { getTodayStats } from "@/services/learningJourneyService";
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
-import { useState } from "react";
+import { Link, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   Modal,
   ScrollView,
@@ -12,7 +13,22 @@ import {
 } from "react-native";
 
 export default function Index() {
+  const router = useRouter();
   const [isChatModalVisible, setIsChatModalVisible] = useState(false);
+  const [stats, setStats] = useState({
+    wordsToday: 0,
+    totalWords: 0,
+    streak: 0,
+  });
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    const data = await getTodayStats();
+    setStats(data);
+  };
 
   return (
     <View className="flex-1 justify-center items-center bg-gradient-to-b from-blue-50 to-white px-6">
@@ -23,6 +39,29 @@ export default function Index() {
       <Text className="text-gray-600 text-center mt-3 mb-8">
         Learn vocabulary from the world around you
       </Text>
+
+      {stats.totalWords > 0 && (
+        <TouchableOpacity
+          onPress={() => router.push("/journey")}
+          style={styles.statsCard}
+        >
+          <View style={styles.statItem}>
+            <Ionicons name="book-outline" size={20} color="#3B82F6" />
+            <Text style={styles.statNumber}>{stats.totalWords}</Text>
+            <Text style={styles.statLabel}>words</Text>
+          </View>
+          {stats.streak > 0 && (
+            <>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Ionicons name="flame" size={20} color="#F59E0B" />
+                <Text style={styles.statNumber}>{stats.streak}</Text>
+                <Text style={styles.statLabel}>day streak</Text>
+              </View>
+            </>
+          )}
+        </TouchableOpacity>
+      )}
 
       <Link href="/camera" asChild>
         <TouchableOpacity className="bg-blue-600 px-8 py-4 rounded-full flex-row items-center mb-4">
@@ -74,6 +113,36 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
+  statsCard: {
+    flexDirection: "row",
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    shadowColor: "#3B82F6",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    gap: 16,
+  },
+  statItem: {
+    alignItems: "center",
+    gap: 4,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#111827",
+  },
+  statLabel: {
+    fontSize: 12,
+    color: "#6B7280",
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: "#E5E7EB",
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",

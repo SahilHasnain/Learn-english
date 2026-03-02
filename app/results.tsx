@@ -1,9 +1,10 @@
 import EnglishPracticeChat from "@/app/components/EnglishPracticeChat";
 import RelatedWordsSection from "@/app/components/RelatedWordsSection";
 import WordCard from "@/app/components/WordCard";
+import { saveLearnedWords } from "@/services/learningJourneyService";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Modal,
   ScrollView,
@@ -19,7 +20,7 @@ interface WordSuggestion {
   level: "beginner" | "intermediate" | "advanced";
   sentence: string;
   conversationStarters: string[];
-  urduMeaning: string;
+  hindiMeaning: string;
 }
 
 export default function ResultsScreen() {
@@ -34,6 +35,19 @@ export default function ResultsScreen() {
 
   const words = useMemo(() => suggestions.map((s) => s.word), [suggestions]);
 
+  useEffect(() => {
+    if (suggestions.length > 0) {
+      // Save learned words to journey
+      const learnedWords = suggestions.map((s) => ({
+        word: s.word,
+        hindiMeaning: s.hindiMeaning,
+        level: s.level,
+        timestamp: Date.now(),
+      }));
+      saveLearnedWords(learnedWords);
+    }
+  }, [suggestions]);
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={styles.header}>
@@ -44,7 +58,12 @@ export default function ResultsScreen() {
           <Ionicons name="arrow-back" size={24} color="#111827" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Word Suggestions</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity
+          onPress={() => router.push("/journey")}
+          style={styles.journeyButton}
+        >
+          <Ionicons name="map-outline" size={24} color="#8B5CF6" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -70,7 +89,7 @@ export default function ResultsScreen() {
             level={item.level}
             sentence={item.sentence}
             conversationStarters={item.conversationStarters}
-            urduMeaning={item.urduMeaning}
+            hindiMeaning={item.hindiMeaning}
           />
         ))}
 
@@ -150,6 +169,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "#111827",
+  },
+  journeyButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
   },
   content: {
     flex: 1,

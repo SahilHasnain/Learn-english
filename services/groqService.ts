@@ -6,7 +6,7 @@ interface WordSuggestion {
   level: "beginner" | "intermediate" | "advanced";
   sentence: string;
   conversationStarters: string[];
-  urduMeaning: string;
+  hindiMeaning: string;
 }
 
 interface ConversationFlow {
@@ -24,7 +24,7 @@ interface RelatedWord {
   word: string;
   relation: string;
   example: string;
-  urduMeaning: string;
+  hindiMeaning: string;
 }
 
 interface RelatedWordsCluster {
@@ -68,19 +68,29 @@ export async function analyzeImageWithGroq(
             content: [
               {
                 type: "text",
-                text: `Analyze this image and identify the main object. Then provide exactly 3 English vocabulary words related to this object at different difficulty levels (beginner, intermediate, advanced). For each word, create a natural example sentence AND 3 conversation starters that someone could actually use in real life when talking about this object. Also provide the Roman Urdu (Urdu written in English letters) translation for each word - use SIMPLE, COMMON Urdu words that everyday people use in conversation, NOT formal or literary Urdu.
+                text: `Analyze this image and identify the main object. Then provide exactly 3 English vocabulary words related to this object at different difficulty levels (beginner, intermediate, advanced). For each word, create a natural example sentence AND 3 conversation starters that someone could actually use in real life when talking about this object. Also provide the Roman Hindi (Hindi written in English letters) translation for each word - use SIMPLE, COMMON Hindi words that everyday people use in conversation, NOT English words written in Hindi script or formal Sanskrit words.
 
-Examples of good translations:
-- cup → "pyala" (not "piyala-e-chai")
-- book → "kitab" (not "mutalea")
-- water → "pani" (not "aab")
-- food → "khana" (not "ghiza")
+CRITICAL: Use actual Hindi vocabulary words, not English words transliterated. 
+
+Examples of CORRECT translations:
+- curtain → "parda" (NOT "pat" or "curtain")
+- drapery → "parda" (NOT "pat ya drapery")
+- cup → "pyala" or "katori"
+- book → "kitab" or "pustak"
+- water → "pani"
+- food → "khana"
+- big → "bada"
+- small → "chota"
+- window → "khidki"
+- door → "darwaza"
+- table → "mez"
+- chair → "kursi"
 
 Return ONLY a valid JSON array in this exact format, no other text:
 [
-  {"word": "word1", "level": "beginner", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"], "urduMeaning": "simple urdu word"},
-  {"word": "word2", "level": "intermediate", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"], "urduMeaning": "simple urdu word"},
-  {"word": "word3", "level": "advanced", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"], "urduMeaning": "simple urdu word"}
+  {"word": "word1", "level": "beginner", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"], "hindiMeaning": "actual hindi word"},
+  {"word": "word2", "level": "intermediate", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"], "hindiMeaning": "actual hindi word"},
+  {"word": "word3", "level": "advanced", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"], "hindiMeaning": "actual hindi word"}
 ]`,
               },
               {
@@ -253,21 +263,30 @@ export async function getRelatedWords(
             role: "user",
             content: `Given these words: ${words.join(", ")}
 
-Create 3 semantic clusters of related vocabulary that would help an English learner build deeper understanding. For each cluster, provide 4-5 related words with their relationship to the original words, a simple example, and the Roman Urdu (Urdu written in English letters) translation - use SIMPLE, COMMON Urdu words that everyday people use in conversation, NOT formal or literary Urdu.
+Create 3 semantic clusters of related vocabulary that would help an English learner build deeper understanding. For each cluster, provide 4-5 related words with their relationship to the original words, a simple example, and the Roman Hindi (Hindi written in English letters) translation - use SIMPLE, COMMON Hindi words that everyday people use in conversation, NOT English words transliterated or formal Sanskrit words.
 
-Examples of good translations:
-- hot → "garam" (not "taptaa")
-- cold → "thanda" (not "sard")
-- big → "bada" (not "azeem")
-- small → "chota" (not "laghu")
+CRITICAL: Use actual Hindi vocabulary words, not English words written in Hindi script.
+
+Examples of CORRECT translations:
+- hot → "garam"
+- cold → "thanda"
+- big → "bada"
+- small → "chota"
+- new → "naya"
+- old → "purana"
+- beautiful → "sundar" or "khoobsurat"
+- clean → "saaf"
+- dirty → "ganda"
+- open → "khula"
+- closed → "band"
 
 Return ONLY a valid JSON array in this exact format, no other text:
 [
   {
     "category": "Category Name (e.g., 'Actions', 'Physical Properties', 'Related Objects')",
     "words": [
-      {"word": "related word", "relation": "how it relates (e.g., 'verb form', 'opposite', 'similar object')", "example": "simple example sentence", "urduMeaning": "simple urdu word"},
-      {"word": "related word", "relation": "relationship", "example": "example", "urduMeaning": "simple urdu word"}
+      {"word": "related word", "relation": "how it relates (e.g., 'verb form', 'opposite', 'similar object')", "example": "simple example sentence", "hindiMeaning": "actual hindi word"},
+      {"word": "related word", "relation": "relationship", "example": "example", "hindiMeaning": "actual hindi word"}
     ]
   }
 ]
