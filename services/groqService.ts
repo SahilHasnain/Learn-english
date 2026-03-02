@@ -1,5 +1,15 @@
-const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY;
+import { getApiKey } from "./appwriteConfig";
+
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+let GROQ_API_KEY: string | null = null;
+
+async function getGroqApiKey(): Promise<string> {
+  if (!GROQ_API_KEY) {
+    GROQ_API_KEY = await getApiKey("groq");
+  }
+  return GROQ_API_KEY;
+}
 
 interface WordSuggestion {
   word: string;
@@ -36,23 +46,12 @@ export async function analyzeImageWithGroq(
   base64Image: string,
 ): Promise<WordSuggestion[]> {
   console.log("=== GROQ API DEBUG ===");
-  console.log("API Key exists:", !!GROQ_API_KEY);
-  console.log("API Key length:", GROQ_API_KEY?.length);
-  console.log("API Key first 10 chars:", GROQ_API_KEY?.substring(0, 10));
-  console.log("Environment check:", {
-    EXPO_PUBLIC_GROQ_API_KEY: process.env.EXPO_PUBLIC_GROQ_API_KEY
-      ? "SET"
-      : "NOT SET",
-    allKeys: Object.keys(process.env).filter((k) => k.includes("GROQ")),
-  });
-
-  if (!GROQ_API_KEY) {
-    throw new Error(
-      "GROQ_API_KEY is not configured. Please add EXPO_PUBLIC_GROQ_API_KEY to your .env.local file and restart the dev server",
-    );
-  }
 
   try {
+    const GROQ_API_KEY = await getGroqApiKey();
+    console.log("API Key loaded from database");
+    console.log("API Key length:", GROQ_API_KEY?.length);
+    console.log("API Key first 10 chars:", GROQ_API_KEY?.substring(0, 10));
     console.log("Making request to Groq API...");
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
@@ -139,11 +138,8 @@ Return ONLY a valid JSON array in this exact format, no other text:
 export async function predictConversationFlow(
   conversationStarter: string,
 ): Promise<ConversationFlow[]> {
-  if (!GROQ_API_KEY) {
-    throw new Error("GROQ_API_KEY is not configured");
-  }
-
   try {
+    const GROQ_API_KEY = await getGroqApiKey();
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
@@ -194,11 +190,8 @@ Return ONLY a valid JSON array in this exact format, no other text:
 export async function fixEnglishMistakes(
   userText: string,
 ): Promise<MistakeFix> {
-  if (!GROQ_API_KEY) {
-    throw new Error("GROQ_API_KEY is not configured");
-  }
-
   try {
+    const GROQ_API_KEY = await getGroqApiKey();
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
@@ -245,11 +238,8 @@ Return ONLY a valid JSON object in this exact format, no other text:
 export async function getRelatedWords(
   words: string[],
 ): Promise<RelatedWordsCluster[]> {
-  if (!GROQ_API_KEY) {
-    throw new Error("GROQ_API_KEY is not configured");
-  }
-
   try {
+    const GROQ_API_KEY = await getGroqApiKey();
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
