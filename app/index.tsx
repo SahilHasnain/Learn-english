@@ -1,4 +1,5 @@
 import EnglishPracticeChat from "@/app/components/EnglishPracticeChat";
+import Flashback from "@/app/components/Flashback";
 import { getTodayStats } from "@/services/learningJourneyService";
 import { COLORS, SHADOWS, SPACING } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,6 +13,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
   const router = useRouter();
@@ -32,118 +34,197 @@ export default function Index() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background.primary }}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.background.primary} />
-      
-      {/* Hero Section */}
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
-        {/* App Icon with Gradient Background */}
-        <View 
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background.primary }}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={COLORS.background.primary}
+      />
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingVertical: SPACING.lg,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Compact Header - Icon and Brand Inline */}
+        <View
           style={{
-            width: 96,
-            height: 96,
-            borderRadius: 24,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 24,
-            backgroundColor: COLORS.accent.primary,
-            ...SHADOWS.accent,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: SPACING.lg,
           }}
         >
-          <Ionicons name="book" size={48} color={COLORS.text.primary} />
+          <View
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 12,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: COLORS.accent.primary,
+              ...SHADOWS.md,
+            }}
+          >
+            <Ionicons name="book" size={24} color={COLORS.text.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontSize: 24,
+                fontWeight: "bold",
+                color: COLORS.text.primary,
+              }}
+            >
+              ScanLearn
+            </Text>
+            <Text
+              style={{
+                fontSize: 13,
+                color: COLORS.text.tertiary,
+              }}
+            >
+              Learn from the world around you
+            </Text>
+          </View>
         </View>
-
-        {/* App Title */}
-        <Text style={{ 
-          fontSize: 40, 
-          fontWeight: 'bold', 
-          color: COLORS.text.primary,
-          marginBottom: SPACING.sm 
-        }}>
-          ScanLearn
-        </Text>
-        <Text style={{ 
-          fontSize: 16,
-          color: COLORS.text.secondary, 
-          textAlign: 'center', 
-          marginBottom: SPACING.xl 
-        }}>
-          Learn vocabulary from the world around you
-        </Text>
 
         {/* Stats Card */}
         {stats.totalWords > 0 && (
           <TouchableOpacity
             onPress={() => router.push("/journey")}
-            style={{ 
-              flexDirection: 'row',
+            style={{
+              flexDirection: "row",
               backgroundColor: COLORS.background.tertiary,
               borderRadius: 16,
               padding: 16,
               borderWidth: 1,
               borderColor: COLORS.border.secondary,
-              gap: SPACING.lg,
-              marginBottom: SPACING.xl,
+              gap: SPACING.md,
+              marginBottom: SPACING.md,
               ...SHADOWS.md,
             }}
             activeOpacity={0.7}
           >
-            <View style={{ alignItems: 'center', gap: SPACING.xs }}>
-              <View 
-                style={{ 
-                  width: 40, 
-                  height: 40, 
-                  borderRadius: 20,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: `${COLORS.accent.secondary}33` 
+            <View style={{ alignItems: "center", gap: 4, flex: 1 }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: `${COLORS.accent.secondary}33`,
                 }}
               >
-                <Ionicons name="book-outline" size={20} color={COLORS.accent.secondary} />
+                <Ionicons
+                  name="book-outline"
+                  size={18}
+                  color={COLORS.accent.secondary}
+                />
               </View>
-              <Text style={{ 
-                fontSize: 20, 
-                fontWeight: 'bold', 
-                color: COLORS.text.primary 
-              }}>
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontWeight: "bold",
+                  color: COLORS.text.primary,
+                }}
+              >
                 {stats.totalWords}
               </Text>
-              <Text style={{ 
-                fontSize: 12, 
-                color: COLORS.text.tertiary 
-              }}>
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: COLORS.text.tertiary,
+                }}
+              >
                 words
               </Text>
             </View>
-            
+
             {stats.streak > 0 && (
               <>
-                <View style={{ width: 1, backgroundColor: COLORS.border.primary }} />
-                <View style={{ alignItems: 'center', gap: SPACING.xs }}>
-                  <View 
-                    style={{ 
-                      width: 40, 
-                      height: 40, 
-                      borderRadius: 20,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: `${COLORS.accent.warning}33` 
+                <View
+                  style={{ width: 1, backgroundColor: COLORS.border.primary }}
+                />
+                <View style={{ alignItems: "center", gap: 4, flex: 1 }}>
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: `${COLORS.accent.warning}33`,
                     }}
                   >
-                    <Ionicons name="flame" size={20} color={COLORS.accent.warning} />
+                    <Ionicons
+                      name="flame"
+                      size={18}
+                      color={COLORS.accent.warning}
+                    />
                   </View>
-                  <Text style={{ 
-                    fontSize: 20, 
-                    fontWeight: 'bold', 
-                    color: COLORS.text.primary 
-                  }}>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "bold",
+                      color: COLORS.text.primary,
+                    }}
+                  >
                     {stats.streak}
                   </Text>
-                  <Text style={{ 
-                    fontSize: 12, 
-                    color: COLORS.text.tertiary 
-                  }}>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: COLORS.text.tertiary,
+                    }}
+                  >
                     day streak
+                  </Text>
+                </View>
+              </>
+            )}
+
+            {stats.wordsToday > 0 && (
+              <>
+                <View
+                  style={{ width: 1, backgroundColor: COLORS.border.primary }}
+                />
+                <View style={{ alignItems: "center", gap: 4, flex: 1 }}>
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: `${COLORS.accent.success}33`,
+                    }}
+                  >
+                    <Ionicons
+                      name="calendar"
+                      size={18}
+                      color={COLORS.accent.success}
+                    />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "bold",
+                      color: COLORS.text.primary,
+                    }}
+                  >
+                    {stats.wordsToday}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: COLORS.text.tertiary,
+                    }}
+                  >
+                    today
                   </Text>
                 </View>
               </>
@@ -151,78 +232,104 @@ export default function Index() {
           </TouchableOpacity>
         )}
 
+        {/* Flashback - passive recall */}
+        {stats.totalWords > 0 && <Flashback />}
+
         {/* Action Buttons */}
-        <View style={{ width: '100%', gap: SPACING.md }}>
+        <View style={{ gap: SPACING.md, marginTop: SPACING.md }}>
           <Link href="/camera" asChild>
-            <TouchableOpacity 
-              style={{ 
+            <TouchableOpacity
+              style={{
                 backgroundColor: COLORS.accent.primary,
                 borderRadius: 16,
                 padding: 16,
-                alignItems: 'center',
-                flexDirection: 'row',
-                justifyContent: 'center',
+                alignItems: "center",
+                flexDirection: "row",
+                justifyContent: "center",
                 ...SHADOWS.md,
               }}
               activeOpacity={0.8}
             >
               <Ionicons name="camera" size={24} color={COLORS.text.primary} />
-              <Text style={{ 
-                color: COLORS.text.primary, 
-                fontWeight: '600', 
-                fontSize: 18, 
-                marginLeft: 12 
-              }}>
+              <Text
+                style={{
+                  color: COLORS.text.primary,
+                  fontWeight: "600",
+                  fontSize: 18,
+                  marginLeft: 12,
+                }}
+              >
                 Start Learning
               </Text>
             </TouchableOpacity>
           </Link>
 
           <TouchableOpacity
+            onPress={() => router.push("/journey")}
+            style={{
+              backgroundColor: COLORS.background.tertiary,
+              borderRadius: 16,
+              padding: 16,
+              alignItems: "center",
+              flexDirection: "row",
+              justifyContent: "center",
+              borderWidth: 1,
+              borderColor: COLORS.border.primary,
+              ...SHADOWS.sm,
+            }}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="map-outline"
+              size={24}
+              color={COLORS.accent.primary}
+            />
+            <Text
+              style={{
+                color: COLORS.text.primary,
+                fontWeight: "600",
+                fontSize: 18,
+                marginLeft: 12,
+              }}
+            >
+              Learning Journey
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             onPress={() => setIsChatModalVisible(true)}
-            style={{ 
+            style={{
               backgroundColor: COLORS.accent.secondary,
               borderRadius: 16,
               padding: 16,
-              alignItems: 'center',
-              flexDirection: 'row',
-              justifyContent: 'center',
+              alignItems: "center",
+              flexDirection: "row",
+              justifyContent: "center",
               ...SHADOWS.md,
             }}
             activeOpacity={0.8}
           >
-            <Ionicons name="chatbubbles" size={24} color={COLORS.text.primary} />
-            <Text style={{ 
-              color: COLORS.text.primary, 
-              fontWeight: '600', 
-              fontSize: 18, 
-              marginLeft: 12 
-            }}>
+            <Ionicons
+              name="chatbubbles"
+              size={24}
+              color={COLORS.text.primary}
+            />
+            <Text
+              style={{
+                color: COLORS.text.primary,
+                fontWeight: "600",
+                fontSize: 18,
+                marginLeft: 12,
+              }}
+            >
               Practice English
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Quick Stats Footer */}
-        {stats.wordsToday > 0 && (
-          <View 
-            style={{ 
-              marginTop: 32,
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-              borderRadius: 999,
-              backgroundColor: COLORS.background.tertiary 
-            }}
-          >
-            <Text style={{ fontSize: 14 }}>
-              <Text style={{ color: COLORS.accent.success, fontWeight: '600' }}>
-                {stats.wordsToday}
-              </Text>
-              <Text style={{ color: COLORS.text.tertiary }}> words learned today</Text>
-            </Text>
-          </View>
-        )}
-      </View>
+        {/* Bottom Spacing */}
+        <View style={{ height: SPACING.xl }} />
+      </ScrollView>
 
       {/* Chat Modal */}
       <Modal
@@ -231,42 +338,50 @@ export default function Index() {
         transparent={true}
         onRequestClose={() => setIsChatModalVisible(false)}
       >
-        <View style={{ 
-          flex: 1, 
-          backgroundColor: COLORS.overlay.dark,
-          justifyContent: 'flex-end',
-        }}>
-          <View style={{ 
-            backgroundColor: COLORS.background.secondary,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            maxHeight: '85%',
-            paddingTop: SPACING.lg,
-          }}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: COLORS.overlay.dark,
+            justifyContent: "flex-end",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: COLORS.background.secondary,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              maxHeight: "85%",
+              paddingTop: SPACING.lg,
+            }}
+          >
             {/* Modal Header */}
-            <View style={{ 
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingHorizontal: SPACING.lg,
-              paddingBottom: SPACING.md,
-              borderBottomWidth: 1,
-              borderBottomColor: COLORS.border.subtle,
-            }}>
-              <Text style={{ 
-                fontSize: 20, 
-                fontWeight: 'bold', 
-                color: COLORS.text.primary 
-              }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingHorizontal: SPACING.lg,
+                paddingBottom: SPACING.md,
+                borderBottomWidth: 1,
+                borderBottomColor: COLORS.border.subtle,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: "bold",
+                  color: COLORS.text.primary,
+                }}
+              >
                 English Practice
               </Text>
               <TouchableOpacity
                 onPress={() => setIsChatModalVisible(false)}
-                style={{ 
-                  width: 40, 
+                style={{
+                  width: 40,
                   height: 40,
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  alignItems: "center",
+                  justifyContent: "center",
                   borderRadius: 20,
                   backgroundColor: COLORS.background.tertiary,
                 }}
@@ -275,7 +390,7 @@ export default function Index() {
                 <Ionicons name="close" size={24} color={COLORS.text.primary} />
               </TouchableOpacity>
             </View>
-            
+
             {/* Modal Content */}
             <ScrollView
               style={{ padding: SPACING.lg }}
@@ -286,6 +401,6 @@ export default function Index() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }

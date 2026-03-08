@@ -387,3 +387,54 @@ Return ONLY the story text, nothing else. No title, no label, no quotes around i
     throw error;
   }
 }
+
+export async function generateFlashback(
+  word: string,
+  hindiMeaning: string,
+): Promise<string> {
+  try {
+    const GROQ_API_KEY = await getGroqApiKey();
+
+    const response = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "user",
+            content: `Write exactly ONE short, vivid English sentence using the word "${word}" (Hindi: ${hindiMeaning}). The sentence should:
+- Be a completely NEW and creative usage (not a textbook example)
+- Feel like something from real life — a scene, moment, or observation
+- Be simple enough for an English learner but interesting enough to remember
+- Be 10-20 words long
+
+Return ONLY the sentence, nothing else. No quotes, no label, no explanation.`,
+          },
+        ],
+        temperature: 1.0,
+        max_tokens: 60,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Groq API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content;
+
+    if (!content) {
+      throw new Error("No content in response");
+    }
+
+    return content.trim().replace(/^["']|["']$/g, "");
+  } catch (error) {
+    console.error("Error generating flashback:", error);
+    throw error;
+  }
+}
