@@ -1,4 +1,5 @@
 import EnglishPracticeChat from "@/app/components/EnglishPracticeChat";
+import MicroStory from "@/app/components/MicroStory";
 import RelatedWordsSection from "@/app/components/RelatedWordsSection";
 import WordCard from "@/app/components/WordCard";
 import { saveLearnedWords } from "@/services/learningJourneyService";
@@ -81,6 +82,13 @@ export default function ResultsScreen() {
         </View>
 
         <RelatedWordsSection words={words} />
+
+        <MicroStory
+          words={suggestions.map((s) => ({
+            word: s.word,
+            hindiMeaning: s.hindiMeaning,
+          }))}
+        />
 
         {suggestions.map((item, index) => (
           <WordCard

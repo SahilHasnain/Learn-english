@@ -327,3 +327,63 @@ Make the categories practical and useful for real conversations.`,
     throw error;
   }
 }
+
+export async function generateMicroStory(
+  words: { word: string; hindiMeaning: string }[],
+): Promise<string> {
+  try {
+    const GROQ_API_KEY = await getGroqApiKey();
+    const wordList = words
+      .map((w) => `${w.word} (${w.hindiMeaning})`)
+      .join(", ");
+    const justWords = words.map((w) => w.word).join(", ");
+
+    const response = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "user",
+            content: `You are a creative storyteller for English learners. Write a vivid, immersive micro-story (exactly 4-5 sentences) that naturally weaves ALL of these words into one relatable real-life scene: ${justWords}
+
+Rules:
+- Make the scene feel like a moment the reader is LIVING through (use "you" perspective)
+- Bold each vocabulary word by wrapping it in **double asterisks**
+- After each bolded word, add the Hindi meaning in parentheses like: **bookmark** (panne ka nishan)
+- Use simple, everyday English — the story should feel effortless to read
+- Make the scene cozy, vivid, and emotionally engaging — the reader should FEEL the moment
+- Do NOT start with "You walk into" — be more creative with the opening
+
+Words with Hindi meanings: ${wordList}
+
+Return ONLY the story text, nothing else. No title, no label, no quotes around it.`,
+          },
+        ],
+        temperature: 0.9,
+        max_tokens: 300,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Groq API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content;
+
+    if (!content) {
+      throw new Error("No content in response");
+    }
+
+    return content.trim();
+  } catch (error) {
+    console.error("Error generating micro story:", error);
+    throw error;
+  }
+}
