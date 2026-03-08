@@ -1,17 +1,18 @@
 import {
-  getAllLearnedWords,
-  getLearningInsights,
-  getTodayStats,
+    type DayGroup,
+    getLearningInsights,
+    getSessionsByDay,
+    getTodayStats,
 } from "@/services/learningJourneyService";
+import { COLORS, SHADOWS, SPACING } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -22,14 +23,6 @@ interface LearningInsight {
   icon: string;
 }
 
-interface LearnedWord {
-  word: string;
-  hindiMeaning: string;
-  level: string;
-  timestamp: number;
-  context?: string;
-}
-
 export default function JourneyScreen() {
   const router = useRouter();
   const [insights, setInsights] = useState<LearningInsight[]>([]);
@@ -38,34 +31,62 @@ export default function JourneyScreen() {
     totalWords: 0,
     streak: 0,
   });
-  const [recentWords, setRecentWords] = useState<LearnedWord[]>([]);
+  const [dayGroups, setDayGroups] = useState<DayGroup[]>([]);
+  const [expandedSessions, setExpandedSessions] = useState<Set<string>>(
+    new Set(),
+  );
 
   useEffect(() => {
     loadJourneyData();
   }, []);
 
   const loadJourneyData = async () => {
-    const [insightsData, statsData, allWords] = await Promise.all([
+    const [insightsData, statsData, sessionGroups] = await Promise.all([
       getLearningInsights(),
       getTodayStats(),
-      getAllLearnedWords(),
+      getSessionsByDay(),
     ]);
 
     setInsights(insightsData);
     setStats(statsData);
-    setRecentWords(allWords.slice(-10).reverse());
+    setDayGroups(sessionGroups);
+
+    // Auto-expand the first session of today
+    if (sessionGroups.length > 0 && sessionGroups[0].sessions.length > 0) {
+      setExpandedSessions(new Set([sessionGroups[0].sessions[0].id]));
+    }
+  };
+
+  const toggleSession = useCallback((sessionId: string) => {
+    setExpandedSessions((prev) => {
+      const next = new Set(prev);
+      if (next.has(sessionId)) {
+        next.delete(sessionId);
+      } else {
+        next.add(sessionId);
+      }
+      return next;
+    });
+  }, []);
+
+  const formatTime = (timestamp: number) => {
+    return new Date(timestamp).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
   };
 
   const getInsightColor = (type: string) => {
     switch (type) {
       case "milestone":
-        return "#10B981";
+        return COLORS.accent.success;
       case "pattern":
-        return "#3B82F6";
+        return COLORS.accent.secondary;
       case "suggestion":
-        return "#8B5CF6";
+        return COLORS.accent.primary;
       default:
-        return "#6B7280";
+        return COLORS.text.disabled;
     }
   };
 
@@ -81,287 +102,457 @@ export default function JourneyScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      <View style={styles.header}>
+    <SafeAreaView 
+      style={{ flex: 1, backgroundColor: COLORS.background.primary }} 
+      edges={["top", "bottom"]}
+    >
+      {/* Header */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.md,
+        backgroundColor: COLORS.background.secondary,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.border.subtle,
+      }}>
         <TouchableOpacity
           onPress={() => router.back()}
-          style={styles.backButton}
+          style={{
+            width: 40,
+            height: 40,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 20,
+            backgroundColor: COLORS.background.tertiary,
+          }}
+          activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={24} color="#111827" />
+          <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Learning Journey</Text>
+        
+        <Text style={{
+          fontSize: 18,
+          fontWeight: '600',
+          color: COLORS.text.primary,
+        }}>
+          Learning Journey
+        </Text>
+        
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Ionicons name="calendar-outline" size={32} color="#3B82F6" />
-            <Text style={styles.statNumber}>{stats.wordsToday}</Text>
-            <Text style={styles.statLabel}>Today</Text>
+      <ScrollView 
+        style={{ flex: 1, padding: SPACING.md }} 
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Stats Cards */}
+        <View style={{ flexDirection: 'row', gap: 12, marginBottom: SPACING.lg }}>
+          <View style={{
+            flex: 1,
+            backgroundColor: COLORS.background.secondary,
+            borderRadius: 16,
+            padding: SPACING.lg,
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: COLORS.border.subtle,
+            ...SHADOWS.md,
+          }}>
+            <View style={{
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              backgroundColor: `${COLORS.accent.secondary}33`,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Ionicons name="calendar-outline" size={24} color={COLORS.accent.secondary} />
+            </View>
+            <Text style={{
+              fontSize: 28,
+              fontWeight: 'bold',
+              color: COLORS.text.primary,
+              marginTop: 8,
+            }}>
+              {stats.wordsToday}
+            </Text>
+            <Text style={{
+              fontSize: 12,
+              color: COLORS.text.tertiary,
+              marginTop: 4,
+            }}>
+              Today
+            </Text>
           </View>
-          <View style={styles.statCard}>
-            <Ionicons name="book-outline" size={32} color="#10B981" />
-            <Text style={styles.statNumber}>{stats.totalWords}</Text>
-            <Text style={styles.statLabel}>Total Words</Text>
+          
+          <View style={{
+            flex: 1,
+            backgroundColor: COLORS.background.secondary,
+            borderRadius: 16,
+            padding: SPACING.lg,
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: COLORS.border.subtle,
+            ...SHADOWS.md,
+          }}>
+            <View style={{
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              backgroundColor: `${COLORS.accent.success}33`,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Ionicons name="book-outline" size={24} color={COLORS.accent.success} />
+            </View>
+            <Text style={{
+              fontSize: 28,
+              fontWeight: 'bold',
+              color: COLORS.text.primary,
+              marginTop: 8,
+            }}>
+              {stats.totalWords}
+            </Text>
+            <Text style={{
+              fontSize: 12,
+              color: COLORS.text.tertiary,
+              marginTop: 4,
+            }}>
+              Total Words
+            </Text>
           </View>
-          <View style={styles.statCard}>
-            <Ionicons name="flame-outline" size={32} color="#F59E0B" />
-            <Text style={styles.statNumber}>{stats.streak}</Text>
-            <Text style={styles.statLabel}>Day Streak</Text>
+          
+          <View style={{
+            flex: 1,
+            backgroundColor: COLORS.background.secondary,
+            borderRadius: 16,
+            padding: SPACING.lg,
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: COLORS.border.subtle,
+            ...SHADOWS.md,
+          }}>
+            <View style={{
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              backgroundColor: `${COLORS.accent.warning}33`,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Ionicons name="flame-outline" size={24} color={COLORS.accent.warning} />
+            </View>
+            <Text style={{
+              fontSize: 28,
+              fontWeight: 'bold',
+              color: COLORS.text.primary,
+              marginTop: 8,
+            }}>
+              {stats.streak}
+            </Text>
+            <Text style={{
+              fontSize: 12,
+              color: COLORS.text.tertiary,
+              marginTop: 4,
+            }}>
+              Day Streak
+            </Text>
           </View>
         </View>
 
+        {/* Learning Insights */}
         {insights.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Your Learning Story</Text>
+          <View style={{ marginBottom: SPACING.lg }}>
+            <Text style={{
+              fontSize: 18,
+              fontWeight: '700',
+              color: COLORS.text.primary,
+              marginBottom: SPACING.md,
+            }}>
+              Your Learning Story
+            </Text>
+            
             {insights.map((insight, index) => (
               <View
                 key={index}
-                style={[
-                  styles.insightCard,
-                  { borderLeftColor: getInsightColor(insight.type) },
-                ]}
+                style={{
+                  backgroundColor: COLORS.background.secondary,
+                  borderRadius: 16,
+                  padding: SPACING.lg,
+                  marginBottom: 12,
+                  borderLeftWidth: 4,
+                  borderLeftColor: getInsightColor(insight.type),
+                  borderWidth: 1,
+                  borderColor: COLORS.border.subtle,
+                  ...SHADOWS.md,
+                }}
               >
-                <View style={styles.insightHeader}>
-                  <View
-                    style={[
-                      styles.insightIconContainer,
-                      { backgroundColor: `${getInsightColor(insight.type)}20` },
-                    ]}
-                  >
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                  marginBottom: 12,
+                }}>
+                  <View style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    backgroundColor: `${getInsightColor(insight.type)}33`,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
                     <Ionicons
                       name={getInsightIcon(insight.icon)}
                       size={24}
                       color={getInsightColor(insight.type)}
                     />
                   </View>
-                  <Text style={styles.insightTitle}>{insight.title}</Text>
+                  <Text style={{
+                    flex: 1,
+                    fontSize: 16,
+                    fontWeight: '700',
+                    color: COLORS.text.primary,
+                  }}>
+                    {insight.title}
+                  </Text>
                 </View>
-                <Text style={styles.insightMessage}>{insight.message}</Text>
+                <Text style={{
+                  fontSize: 14,
+                  color: COLORS.text.secondary,
+                  lineHeight: 22,
+                }}>
+                  {insight.message}
+                </Text>
               </View>
             ))}
           </View>
         )}
 
-        {recentWords.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Recently Learned</Text>
-            {recentWords.map((word, index) => (
-              <View key={index} style={styles.wordCard}>
-                <View style={styles.wordInfo}>
-                  <Text style={styles.wordText}>{word.word}</Text>
-                  <Text style={styles.wordHindi}>{word.hindiMeaning}</Text>
+        {/* Word Timeline */}
+        {dayGroups.length > 0 && (
+          <View style={{ marginBottom: SPACING.lg }}>
+            <Text style={{
+              fontSize: 18,
+              fontWeight: '700',
+              color: COLORS.text.primary,
+              marginBottom: SPACING.md,
+            }}>
+              Your Word Timeline
+            </Text>
+            
+            {dayGroups.map((dayGroup) => (
+              <View key={dayGroup.dateKey} style={{ marginBottom: 8 }}>
+                {/* Day Header */}
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginBottom: 12,
+                  gap: 10,
+                }}>
+                  <View style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: 5,
+                    backgroundColor: COLORS.accent.primary,
+                  }} />
+                  <Text style={{
+                    fontSize: 16,
+                    fontWeight: '700',
+                    color: COLORS.text.primary,
+                    flex: 1,
+                  }}>
+                    {dayGroup.label}
+                  </Text>
+                  <Text style={{
+                    fontSize: 13,
+                    color: COLORS.text.tertiary,
+                    fontWeight: '500',
+                  }}>
+                    {dayGroup.sessions.reduce((sum, s) => sum + s.words.length, 0)} words
+                  </Text>
                 </View>
-                <View style={styles.wordMeta}>
-                  <View
-                    style={[
-                      styles.levelBadge,
-                      {
-                        backgroundColor:
-                          word.level === "beginner"
-                            ? "#10B981"
-                            : word.level === "intermediate"
-                              ? "#F59E0B"
-                              : "#EF4444",
-                      },
-                    ]}
-                  >
-                    <Text style={styles.levelText}>{word.level}</Text>
-                  </View>
-                  {word.context && (
-                    <Text style={styles.contextText}>{word.context}</Text>
-                  )}
-                </View>
+
+                {/* Sessions */}
+                {dayGroup.sessions.map((session) => {
+                  const isExpanded = expandedSessions.has(session.id);
+                  return (
+                    <View 
+                      key={session.id} 
+                      style={{
+                        flexDirection: 'row',
+                        marginLeft: 4,
+                        marginBottom: 12,
+                      }}
+                    >
+                      <View style={{
+                        width: 2,
+                        backgroundColor: `${COLORS.accent.primary}33`,
+                        marginRight: 18,
+                      }} />
+                      
+                      <TouchableOpacity
+                        style={{
+                          flex: 1,
+                          backgroundColor: COLORS.background.secondary,
+                          borderRadius: 14,
+                          padding: 14,
+                          borderWidth: 1,
+                          borderColor: COLORS.border.subtle,
+                          ...SHADOWS.sm,
+                        }}
+                        onPress={() => toggleSession(session.id)}
+                        activeOpacity={0.7}
+                      >
+                        {/* Session Header */}
+                        <View style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}>
+                          <View style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 10,
+                          }}>
+                            <View style={{
+                              width: 34,
+                              height: 34,
+                              borderRadius: 17,
+                              backgroundColor: `${COLORS.accent.primary}33`,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}>
+                              <Ionicons name="camera" size={16} color={COLORS.accent.primary} />
+                            </View>
+                            <View>
+                              <Text style={{
+                                fontSize: 14,
+                                fontWeight: '600',
+                                color: COLORS.text.primary,
+                              }}>
+                                {formatTime(session.timestamp)}
+                              </Text>
+                              <Text style={{
+                                fontSize: 12,
+                                color: COLORS.text.tertiary,
+                                marginTop: 1,
+                              }}>
+                                {session.words.length} {session.words.length === 1 ? "word" : "words"} learned
+                              </Text>
+                            </View>
+                          </View>
+                          <Ionicons
+                            name={isExpanded ? "chevron-up" : "chevron-down"}
+                            size={20}
+                            color={COLORS.text.tertiary}
+                          />
+                        </View>
+
+                        {/* Session Words */}
+                        {isExpanded && (
+                          <View style={{
+                            marginTop: 12,
+                            borderTopWidth: 1,
+                            borderTopColor: COLORS.border.subtle,
+                            paddingTop: 12,
+                            gap: 8,
+                          }}>
+                            {session.words.map((word, wIdx) => (
+                              <View 
+                                key={wIdx} 
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  backgroundColor: COLORS.background.tertiary,
+                                  borderRadius: 10,
+                                  paddingVertical: 10,
+                                  paddingHorizontal: 14,
+                                  borderWidth: 1,
+                                  borderColor: COLORS.border.secondary,
+                                }}
+                              >
+                                <View style={{ flex: 1 }}>
+                                  <Text style={{
+                                    fontSize: 16,
+                                    fontWeight: '700',
+                                    color: COLORS.text.primary,
+                                  }}>
+                                    {word.word}
+                                  </Text>
+                                  <Text style={{
+                                    fontSize: 13,
+                                    color: COLORS.text.tertiary,
+                                    fontStyle: 'italic',
+                                    marginTop: 1,
+                                  }}>
+                                    {word.hindiMeaning}
+                                  </Text>
+                                </View>
+                                <View style={{
+                                  width: 10,
+                                  height: 10,
+                                  borderRadius: 5,
+                                  marginLeft: 10,
+                                  backgroundColor: word.level === "beginner"
+                                    ? COLORS.accent.success
+                                    : word.level === "intermediate"
+                                    ? COLORS.accent.warning
+                                    : COLORS.accent.error,
+                                }} />
+                              </View>
+                            ))}
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
               </View>
             ))}
           </View>
         )}
 
+        {/* Empty State */}
         {stats.totalWords === 0 && (
-          <View style={styles.emptyState}>
-            <Ionicons name="telescope-outline" size={80} color="#D1D5DB" />
-            <Text style={styles.emptyTitle}>Start Your Journey</Text>
-            <Text style={styles.emptyMessage}>
+          <View style={{
+            alignItems: 'center',
+            paddingVertical: 60,
+          }}>
+            <View style={{
+              width: 120,
+              height: 120,
+              borderRadius: 60,
+              backgroundColor: COLORS.background.tertiary,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: SPACING.lg,
+            }}>
+              <Ionicons name="telescope-outline" size={60} color={COLORS.text.disabled} />
+            </View>
+            <Text style={{
+              fontSize: 20,
+              fontWeight: '700',
+              color: COLORS.text.primary,
+              marginBottom: 8,
+            }}>
+              Start Your Journey
+            </Text>
+            <Text style={{
+              fontSize: 14,
+              color: COLORS.text.secondary,
+              textAlign: 'center',
+              paddingHorizontal: 40,
+              lineHeight: 22,
+            }}>
               Scan objects around you to begin building your vocabulary story!
             </Text>
           </View>
         )}
 
-        <View style={styles.bottomPadding} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F3F4F6",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: "white",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#111827",
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
-  statsContainer: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 24,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 20,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  statNumber: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#111827",
-    marginTop: 8,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: "#6B7280",
-    marginTop: 4,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 16,
-  },
-  insightCard: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  insightHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 12,
-  },
-  insightIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  insightTitle: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  insightMessage: {
-    fontSize: 14,
-    color: "#6B7280",
-    lineHeight: 22,
-  },
-  wordCard: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  wordInfo: {
-    flex: 1,
-  },
-  wordText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  wordHindi: {
-    fontSize: 14,
-    color: "#6B7280",
-    fontStyle: "italic",
-    marginTop: 2,
-  },
-  wordMeta: {
-    alignItems: "flex-end",
-    gap: 6,
-  },
-  levelBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  levelText: {
-    color: "white",
-    fontSize: 10,
-    fontWeight: "700",
-    textTransform: "uppercase",
-  },
-  contextText: {
-    fontSize: 11,
-    color: "#9CA3AF",
-  },
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: 60,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#111827",
-    marginTop: 16,
-  },
-  emptyMessage: {
-    fontSize: 14,
-    color: "#6B7280",
-    textAlign: "center",
-    marginTop: 8,
-    paddingHorizontal: 40,
-  },
-  bottomPadding: {
-    height: 40,
-  },
-});

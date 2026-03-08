@@ -1,12 +1,12 @@
 import { generateMicroStory } from "@/services/groqService";
+import { COLORS, SHADOWS, SPACING } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 interface MicroStoryProps {
@@ -37,14 +37,19 @@ export default function MicroStory({ words }: MicroStoryProps) {
   }, [words, story, isExpanded]);
 
   const renderStoryText = (text: string) => {
-    // Split by **bold** markers and render with styling
     const parts = text.split(/(\*\*[^*]+\*\*)/g);
     return (
-      <Text style={styles.storyText}>
+      <Text style={{ fontSize: 16, lineHeight: 26, color: COLORS.text.secondary }}>
         {parts.map((part, i) => {
           if (part.startsWith("**") && part.endsWith("**")) {
             return (
-              <Text key={i} style={styles.boldWord}>
+              <Text 
+                key={i} 
+                style={{ 
+                  fontWeight: '800', 
+                  color: COLORS.accent.warning 
+                }}
+              >
                 {part.slice(2, -2)}
               </Text>
             );
@@ -58,108 +63,81 @@ export default function MicroStory({ words }: MicroStoryProps) {
   return (
     <>
       <TouchableOpacity
-        style={styles.button}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: `${COLORS.accent.warning}1A`,
+          padding: SPACING.md,
+          borderRadius: 16,
+          marginBottom: SPACING.lg,
+          borderWidth: 2,
+          borderColor: `${COLORS.accent.warning}33`,
+        }}
         onPress={loadStory}
         disabled={loading}
+        activeOpacity={0.7}
       >
-        <View style={styles.buttonContent}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="book" size={20} color="#D97706" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+          <View style={{
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: `${COLORS.accent.warning}33`,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <Ionicons name="book" size={20} color={COLORS.accent.warning} />
           </View>
-          <View style={styles.textContainer}>
-            <Text style={styles.buttonTitle}>Live the Words</Text>
-            <Text style={styles.buttonSubtitle}>
+          <View style={{ flex: 1 }}>
+            <Text style={{
+              fontSize: 16,
+              fontWeight: '700',
+              color: COLORS.accent.warning,
+              marginBottom: 2,
+            }}>
+              Live the Words
+            </Text>
+            <Text style={{
+              fontSize: 13,
+              color: COLORS.text.secondary,
+            }}>
               A tiny story with all your words
             </Text>
           </View>
         </View>
+        
         {loading ? (
-          <ActivityIndicator size="small" color="#D97706" />
+          <ActivityIndicator size="small" color={COLORS.accent.warning} />
         ) : (
           <Ionicons
             name={isExpanded ? "chevron-up" : "chevron-down"}
             size={24}
-            color="#D97706"
+            color={COLORS.accent.warning}
           />
         )}
       </TouchableOpacity>
 
       {isExpanded && story && (
-        <View style={styles.storyCard}>
-          <View style={styles.quoteBar} />
-          <View style={styles.storyContent}>{renderStoryText(story)}</View>
+        <View style={{
+          backgroundColor: COLORS.background.secondary,
+          borderRadius: 16,
+          marginBottom: SPACING.lg,
+          flexDirection: 'row',
+          overflow: 'hidden',
+          borderWidth: 1,
+          borderColor: COLORS.border.subtle,
+          ...SHADOWS.md,
+        }}>
+          <View style={{
+            width: 4,
+            backgroundColor: COLORS.accent.warning,
+          }} />
+          <View style={{ flex: 1, padding: SPACING.lg }}>
+            {renderStoryText(story)}
+          </View>
         </View>
       )}
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  button: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#FFFBEB",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: "#FDE68A",
-  },
-  buttonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    flex: 1,
-  },
-  iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FEF3C7",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  textContainer: {
-    flex: 1,
-  },
-  buttonTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#B45309",
-    marginBottom: 2,
-  },
-  buttonSubtitle: {
-    fontSize: 13,
-    color: "#D97706",
-  },
-  storyCard: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    marginBottom: 20,
-    flexDirection: "row",
-    shadowColor: "#D97706",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
-    overflow: "hidden",
-  },
-  quoteBar: {
-    width: 4,
-    backgroundColor: "#F59E0B",
-  },
-  storyContent: {
-    flex: 1,
-    padding: 20,
-  },
-  storyText: {
-    fontSize: 16,
-    lineHeight: 26,
-    color: "#374151",
-  },
-  boldWord: {
-    fontWeight: "800",
-    color: "#B45309",
-  },
-});

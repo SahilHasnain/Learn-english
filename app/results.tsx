@@ -3,16 +3,16 @@ import MicroStory from "@/app/components/MicroStory";
 import RelatedWordsSection from "@/app/components/RelatedWordsSection";
 import WordCard from "@/app/components/WordCard";
 import { saveLearnedWords } from "@/services/learningJourneyService";
+import { COLORS, SHADOWS, SPACING } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Modal,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -50,39 +50,123 @@ export default function ResultsScreen() {
   }, [suggestions]);
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      <View style={styles.header}>
+    <SafeAreaView 
+      style={{ flex: 1, backgroundColor: COLORS.background.primary }} 
+      edges={["top", "bottom"]}
+    >
+      {/* Header */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.md,
+        backgroundColor: COLORS.background.secondary,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.border.subtle,
+      }}>
         <TouchableOpacity
           onPress={() => router.back()}
-          style={styles.backButton}
+          style={{
+            width: 40,
+            height: 40,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 20,
+            backgroundColor: COLORS.background.tertiary,
+          }}
+          activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={24} color="#111827" />
+          <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Word Suggestions</Text>
+        
+        <Text style={{
+          fontSize: 18,
+          fontWeight: '600',
+          color: COLORS.text.primary,
+        }}>
+          Word Suggestions
+        </Text>
+        
         <TouchableOpacity
           onPress={() => router.push("/journey")}
-          style={styles.journeyButton}
+          style={{
+            width: 40,
+            height: 40,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 20,
+            backgroundColor: COLORS.background.tertiary,
+          }}
+          activeOpacity={0.7}
         >
-          <Ionicons name="map-outline" size={24} color="#8B5CF6" />
+          <Ionicons name="map-outline" size={24} color={COLORS.accent.primary} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.compactHeader}>
-          <View style={styles.compactHeaderLeft}>
-            <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-            <Text style={styles.compactHeaderText}>
-              {suggestions.length} {suggestions.length === 1 ? "word" : "words"}{" "}
-              found
+      {/* Content */}
+      <ScrollView 
+        style={{ flex: 1, paddingTop: SPACING.md, paddingHorizontal: SPACING.md }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Success Header Card */}
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: COLORS.background.tertiary,
+          paddingVertical: 14,
+          paddingHorizontal: SPACING.md,
+          borderRadius: 12,
+          marginBottom: SPACING.lg,
+          borderWidth: 1,
+          borderColor: COLORS.border.secondary,
+          ...SHADOWS.sm,
+        }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={{
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              backgroundColor: `${COLORS.accent.success}33`,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Ionicons name="checkmark-circle" size={20} color={COLORS.accent.success} />
+            </View>
+            <Text style={{
+              fontSize: 16,
+              fontWeight: '600',
+              color: COLORS.text.primary,
+            }}>
+              {suggestions.length} {suggestions.length === 1 ? "word" : "words"} found
             </Text>
           </View>
-          <View style={styles.successBadge}>
-            <Text style={styles.successBadgeText}>Ready to learn</Text>
+          
+          <View style={{
+            backgroundColor: `${COLORS.accent.success}20`,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: `${COLORS.accent.success}40`,
+          }}>
+            <Text style={{
+              fontSize: 11,
+              fontWeight: '600',
+              color: COLORS.accent.success,
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+            }}>
+              Ready to learn
+            </Text>
           </View>
         </View>
 
+        {/* Related Words Section */}
         <RelatedWordsSection words={words} />
 
+        {/* Micro Story */}
         <MicroStory
           words={suggestions.map((s) => ({
             word: s.word,
@@ -90,6 +174,7 @@ export default function ResultsScreen() {
           }))}
         />
 
+        {/* Word Cards */}
         {suggestions.map((item, index) => (
           <WordCard
             key={index}
@@ -101,38 +186,126 @@ export default function ResultsScreen() {
           />
         ))}
 
-        <View style={styles.bottomPadding} />
+        {/* Capture More Button */}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: COLORS.background.elevated,
+            paddingVertical: 16,
+            paddingHorizontal: 24,
+            borderRadius: 12,
+            gap: 8,
+            marginTop: SPACING.lg,
+            borderWidth: 1,
+            borderColor: COLORS.border.primary,
+            ...SHADOWS.md,
+          }}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="camera" size={20} color={COLORS.text.primary} />
+          <Text style={{
+            color: COLORS.text.primary,
+            fontSize: 15,
+            fontWeight: '600',
+          }}>
+            Capture More
+          </Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 100 }} />
       </ScrollView>
 
+      {/* Floating Action Button */}
       <TouchableOpacity
-        style={styles.fab}
+        style={{
+          position: 'absolute',
+          right: 20,
+          bottom: 100,
+          width: 64,
+          height: 64,
+          borderRadius: 32,
+          backgroundColor: COLORS.accent.primary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          ...SHADOWS.accent,
+        }}
         onPress={() => setIsChatModalVisible(true)}
+        activeOpacity={0.8}
       >
-        <Ionicons name="chatbubbles" size={28} color="white" />
+        <Ionicons name="chatbubbles" size={28} color={COLORS.text.primary} />
       </TouchableOpacity>
 
+      {/* Chat Modal */}
       <Modal
         visible={isChatModalVisible}
         animationType="slide"
         transparent={true}
         onRequestClose={() => setIsChatModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalTitleContainer}>
-                <Ionicons name="sparkles" size={24} color="#8B5CF6" />
-                <Text style={styles.modalTitle}>Practice English</Text>
+        <View style={{
+          flex: 1,
+          backgroundColor: COLORS.overlay.dark,
+          justifyContent: 'flex-end',
+        }}>
+          <View style={{
+            backgroundColor: COLORS.background.secondary,
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            maxHeight: '85%',
+            paddingTop: 8,
+          }}>
+            {/* Modal Header */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: SPACING.lg,
+              paddingVertical: SPACING.lg,
+              borderBottomWidth: 1,
+              borderBottomColor: COLORS.border.subtle,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: `${COLORS.accent.primary}33`,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Ionicons name="sparkles" size={20} color={COLORS.accent.primary} />
+                </View>
+                <Text style={{
+                  fontSize: 22,
+                  fontWeight: 'bold',
+                  color: COLORS.text.primary,
+                }}>
+                  Practice English
+                </Text>
               </View>
+              
               <TouchableOpacity
                 onPress={() => setIsChatModalVisible(false)}
-                style={styles.closeButton}
+                style={{
+                  width: 40,
+                  height: 40,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 20,
+                  backgroundColor: COLORS.background.tertiary,
+                }}
+                activeOpacity={0.7}
               >
-                <Ionicons name="close-circle" size={32} color="#6B7280" />
+                <Ionicons name="close" size={24} color={COLORS.text.primary} />
               </TouchableOpacity>
             </View>
+            
+            {/* Modal Content */}
             <ScrollView
-              style={styles.modalScroll}
+              style={{ padding: SPACING.lg }}
               showsVerticalScrollIndicator={false}
             >
               <EnglishPracticeChat />
@@ -140,172 +313,6 @@ export default function ResultsScreen() {
           </View>
         </View>
       </Modal>
-
-      <TouchableOpacity
-        onPress={() => router.back()}
-        style={styles.captureMoreButton}
-      >
-        <Ionicons name="camera" size={24} color="white" />
-        <Text style={styles.captureMoreText}>Capture More</Text>
-      </TouchableOpacity>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F3F4F6",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: "white",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#111827",
-  },
-  journeyButton: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  content: {
-    flex: 1,
-    paddingTop: 12,
-    paddingHorizontal: 16,
-  },
-  compactHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "white",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-    shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  compactHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  compactHeaderText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#111827",
-  },
-  successBadge: {
-    backgroundColor: "#ECFDF5",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  successBadgeText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#059669",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  bottomPadding: {
-    height: 80,
-  },
-  fab: {
-    position: "absolute",
-    right: 20,
-    bottom: 100,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#8B5CF6",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#8B5CF6",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "#F9FAFB",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    maxHeight: "85%",
-    paddingTop: 8,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  modalTitleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-  closeButton: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modalScroll: {
-    padding: 24,
-  },
-  captureMoreButton: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#3B82F6",
-    paddingVertical: 18,
-    gap: 10,
-    shadowColor: "#3B82F6",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  captureMoreText: {
-    color: "white",
-    fontSize: 17,
-    fontWeight: "700",
-  },
-});

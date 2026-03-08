@@ -209,3 +209,54 @@ export async function getTodayStats(): Promise<{
     streak: calculateStreak(sessions),
   };
 }
+
+export interface DayGroup {
+  label: string;
+  dateKey: string;
+  sessions: LearningSession[];
+}
+
+export async function getSessionsByDay(): Promise<DayGroup[]> {
+  const sessions = await getAllSessions();
+  if (sessions.length === 0) return [];
+
+  const sorted = [...sessions].sort((a, b) => b.timestamp - a.timestamp);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const groups: Map<string, { label: string; sessions: LearningSession[] }> =
+    new Map();
+
+  for (const session of sorted) {
+    const sessionDate = new Date(session.timestamp);
+    sessionDate.setHours(0, 0, 0, 0);
+    const dateKey = sessionDate.toISOString().split("T")[0];
+
+    let label: string;
+    if (sessionDate.getTime() === today.getTime()) {
+      label = "Today";
+    } else if (sessionDate.getTime() === yesterday.getTime()) {
+      label = "Yesterday";
+    } else {
+      label = sessionDate.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      });
+    }
+
+    if (!groups.has(dateKey)) {
+      groups.set(dateKey, { label, sessions: [] });
+    }
+    groups.get(dateKey)!.sessions.push(session);
+  }
+
+  return Array.from(groups.entries()).map(([dateKey, group]) => ({
+    dateKey,
+    label: group.label,
+    sessions: group.sessions,
+  }));
+}

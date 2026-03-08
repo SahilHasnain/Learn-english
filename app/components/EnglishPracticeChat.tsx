@@ -1,13 +1,13 @@
 import { fixEnglishMistakes } from "@/services/groqService";
+import { COLORS, SPACING } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 interface MistakeFix {
@@ -36,145 +36,153 @@ export default function EnglishPracticeChat() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Ionicons name="create" size={20} color="#8B5CF6" />
-        <Text style={styles.title}>Practice Your English</Text>
+    <View style={{
+      backgroundColor: COLORS.background.tertiary,
+      borderRadius: 16,
+      padding: SPACING.lg,
+      borderWidth: 1,
+      borderColor: COLORS.border.secondary,
+    }}>
+      {/* Header */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 8,
+      }}>
+        <View style={{
+          width: 32,
+          height: 32,
+          borderRadius: 16,
+          backgroundColor: `${COLORS.accent.primary}33`,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <Ionicons name="create" size={16} color={COLORS.accent.primary} />
+        </View>
+        <Text style={{
+          fontSize: 18,
+          fontWeight: 'bold',
+          color: COLORS.accent.primary,
+        }}>
+          Practice Your English
+        </Text>
       </View>
-      <Text style={styles.subtitle}>
-        Type what you want to say, and I&apos;ll help make it sound natural
+      
+      <Text style={{
+        fontSize: 14,
+        color: COLORS.text.secondary,
+        marginBottom: SPACING.md,
+      }}>
+        Type what you want to say, and I'll help make it sound natural
       </Text>
+      
+      {/* Text Input */}
       <TextInput
-        style={styles.textInput}
+        style={{
+          backgroundColor: COLORS.background.secondary,
+          borderRadius: 12,
+          padding: SPACING.md,
+          fontSize: 15,
+          color: COLORS.text.primary,
+          minHeight: 80,
+          textAlignVertical: 'top',
+          borderWidth: 1,
+          borderColor: COLORS.border.primary,
+          marginBottom: 12,
+        }}
         placeholder="e.g., I want go to store buy milk..."
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={COLORS.text.disabled}
         value={userInput}
         onChangeText={setUserInput}
         multiline
       />
+      
+      {/* Fix Button */}
       <TouchableOpacity
         onPress={handleFixMistakes}
         disabled={!userInput.trim() || isFixing}
-        style={[
-          styles.fixButton,
-          (!userInput.trim() || isFixing) && styles.fixButtonDisabled,
-        ]}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: !userInput.trim() || isFixing ? COLORS.interactive.disabled : COLORS.accent.primary,
+          paddingVertical: 14,
+          borderRadius: 12,
+          gap: 8,
+        }}
+        activeOpacity={0.8}
       >
         {isFixing ? (
-          <ActivityIndicator size="small" color="white" />
+          <ActivityIndicator size="small" color={COLORS.text.primary} />
         ) : (
           <>
-            <Ionicons name="sparkles" size={18} color="white" />
-            <Text style={styles.fixButtonText}>Fix My English</Text>
+            <Ionicons name="sparkles" size={18} color={COLORS.text.primary} />
+            <Text style={{
+              color: COLORS.text.primary,
+              fontSize: 15,
+              fontWeight: '600',
+            }}>
+              Fix My English
+            </Text>
           </>
         )}
       </TouchableOpacity>
 
+      {/* Fix Results */}
       {mistakeFix && (
-        <View style={styles.fixResultContainer}>
-          <View style={styles.fixResultBox}>
-            <Text style={styles.fixResultLabel}>✨ Better way to say it:</Text>
-            <Text style={styles.fixResultText}>{mistakeFix.corrected}</Text>
+        <View style={{ marginTop: SPACING.md, gap: 12 }}>
+          {/* Corrected Version */}
+          <View style={{
+            backgroundColor: `${COLORS.accent.success}1A`,
+            borderRadius: 12,
+            padding: SPACING.md,
+            borderLeftWidth: 4,
+            borderLeftColor: COLORS.accent.success,
+          }}>
+            <Text style={{
+              fontSize: 13,
+              fontWeight: '600',
+              color: COLORS.accent.success,
+              marginBottom: 8,
+            }}>
+              ✨ Better way to say it:
+            </Text>
+            <Text style={{
+              fontSize: 16,
+              color: COLORS.text.primary,
+              lineHeight: 24,
+            }}>
+              {mistakeFix.corrected}
+            </Text>
           </View>
-          <View style={styles.explanationBox}>
-            <Text style={styles.explanationLabel}>💡 Why:</Text>
-            <Text style={styles.explanationText}>{mistakeFix.explanation}</Text>
+          
+          {/* Explanation */}
+          <View style={{
+            backgroundColor: `${COLORS.accent.info}1A`,
+            borderRadius: 12,
+            padding: SPACING.md,
+            borderLeftWidth: 4,
+            borderLeftColor: COLORS.accent.info,
+          }}>
+            <Text style={{
+              fontSize: 13,
+              fontWeight: '600',
+              color: COLORS.accent.info,
+              marginBottom: 8,
+            }}>
+              💡 Why:
+            </Text>
+            <Text style={{
+              fontSize: 14,
+              color: COLORS.text.secondary,
+              lineHeight: 20,
+            }}>
+              {mistakeFix.explanation}
+            </Text>
           </View>
         </View>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 20,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#8B5CF6",
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#6B7280",
-    marginBottom: 16,
-  },
-  textInput: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 15,
-    color: "#111827",
-    minHeight: 80,
-    textAlignVertical: "top",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    marginBottom: 12,
-  },
-  fixButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#8B5CF6",
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 8,
-  },
-  fixButtonDisabled: {
-    backgroundColor: "#D1D5DB",
-  },
-  fixButtonText: {
-    color: "white",
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  fixResultContainer: {
-    marginTop: 16,
-    gap: 12,
-  },
-  fixResultBox: {
-    backgroundColor: "#F0FDF4",
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: "#10B981",
-  },
-  fixResultLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#059669",
-    marginBottom: 8,
-  },
-  fixResultText: {
-    fontSize: 16,
-    color: "#065F46",
-    lineHeight: 24,
-  },
-  explanationBox: {
-    backgroundColor: "#EEF2FF",
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: "#6366F1",
-  },
-  explanationLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#4F46E5",
-    marginBottom: 8,
-  },
-  explanationText: {
-    fontSize: 14,
-    color: "#3730A3",
-    lineHeight: 20,
-  },
-});

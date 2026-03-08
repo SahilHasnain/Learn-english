@@ -1,6 +1,7 @@
+import { COLORS, SHADOWS, SPACING } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import ConversationFlow from "./ConversationFlow";
 
 interface WordCardProps {
@@ -20,16 +21,16 @@ export default function WordCard({
 }: WordCardProps) {
   const [expandedStarter, setExpandedStarter] = useState<string | null>(null);
 
-  const getLevelGradient = (level: string) => {
+  const getLevelColor = (level: string) => {
     switch (level) {
       case "beginner":
-        return "#10B981";
+        return COLORS.accent.success;
       case "intermediate":
-        return "#F59E0B";
+        return COLORS.accent.warning;
       case "advanced":
-        return "#EF4444";
+        return COLORS.accent.error;
       default:
-        return "#6B7280";
+        return COLORS.text.disabled;
     }
   };
 
@@ -38,10 +39,20 @@ export default function WordCard({
     const parts = sentence.split(regex);
 
     return (
-      <Text style={styles.sentenceText}>
+      <Text style={{ fontSize: 16, color: COLORS.text.secondary, lineHeight: 26, flex: 1 }}>
         {parts.map((part, index) =>
           part.toLowerCase() === word.toLowerCase() ? (
-            <Text key={index} style={styles.highlightedWord}>
+            <Text 
+              key={index} 
+              style={{ 
+                fontWeight: '700', 
+                color: COLORS.accent.primary,
+                backgroundColor: `${COLORS.accent.primary}33`,
+                paddingHorizontal: 6,
+                paddingVertical: 3,
+                borderRadius: 6,
+              }}
+            >
               {part}
             </Text>
           ) : (
@@ -53,40 +64,123 @@ export default function WordCard({
   };
 
   return (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={styles.wordContainer}>
-          <Ionicons name="book-outline" size={20} color="#3B82F6" />
-          <View>
-            <Text style={styles.wordText}>{word}</Text>
-            <Text style={styles.hindiMeaning}>{hindiMeaning}</Text>
+    <View style={{
+      backgroundColor: COLORS.background.secondary,
+      borderRadius: 20,
+      padding: 24,
+      marginBottom: SPACING.lg,
+      borderWidth: 1,
+      borderColor: COLORS.border.subtle,
+      ...SHADOWS.md,
+    }}>
+      {/* Card Header */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: SPACING.md,
+      }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+          <View style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: `${COLORS.accent.secondary}33`,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <Ionicons name="book-outline" size={20} color={COLORS.accent.secondary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{
+              fontSize: 28,
+              fontWeight: 'bold',
+              color: COLORS.text.primary,
+            }}>
+              {word}
+            </Text>
+            <Text style={{
+              fontSize: 14,
+              color: COLORS.text.tertiary,
+              fontStyle: 'italic',
+              marginTop: 2,
+            }}>
+              {hindiMeaning}
+            </Text>
           </View>
         </View>
-        <View
-          style={[
-            styles.levelBadge,
-            { backgroundColor: getLevelGradient(level) },
-          ]}
-        >
-          <Text style={styles.levelText}>{level}</Text>
+        
+        <View style={{
+          backgroundColor: getLevelColor(level),
+          paddingHorizontal: 14,
+          paddingVertical: 7,
+          borderRadius: 12,
+          ...SHADOWS.sm,
+        }}>
+          <Text style={{
+            color: COLORS.text.primary,
+            fontSize: 11,
+            fontWeight: '700',
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+          }}>
+            {level}
+          </Text>
         </View>
       </View>
 
-      <View style={styles.sentenceContainer}>
+      {/* Sentence Container */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 8,
+        backgroundColor: COLORS.background.tertiary,
+        padding: SPACING.md,
+        borderRadius: 12,
+        borderLeftWidth: 3,
+        borderLeftColor: COLORS.accent.secondary,
+      }}>
         <Ionicons
           name="chatbox-ellipses-outline"
           size={16}
-          color="#9CA3AF"
-          style={styles.quoteIcon}
+          color={COLORS.text.tertiary}
+          style={{ marginTop: 2 }}
         />
         {highlightWord(sentence, word)}
       </View>
 
-      <View style={styles.conversationSection}>
-        <View style={styles.conversationHeader}>
-          <Ionicons name="chatbubbles" size={20} color="#3B82F6" />
-          <Text style={styles.conversationTitle}>Start a Conversation</Text>
+      {/* Conversation Section */}
+      <View style={{
+        marginTop: SPACING.lg,
+        paddingTop: SPACING.lg,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border.subtle,
+      }}>
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          marginBottom: SPACING.md,
+        }}>
+          <View style={{
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: `${COLORS.accent.secondary}33`,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <Ionicons name="chatbubbles" size={16} color={COLORS.accent.secondary} />
+          </View>
+          <Text style={{
+            fontSize: 16,
+            fontWeight: '700',
+            color: COLORS.accent.secondary,
+          }}>
+            Start a Conversation
+          </Text>
         </View>
+        
         {conversationStarters?.map((starter, idx) => (
           <ConversationFlow
             key={idx}
@@ -101,100 +195,3 @@ export default function WordCard({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  wordContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  wordText: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-  hindiMeaning: {
-    fontSize: 14,
-    color: "#6B7280",
-    fontStyle: "italic",
-    marginTop: 2,
-  },
-  levelBadge: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  levelText: {
-    color: "white",
-    fontSize: 11,
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  sentenceContainer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    backgroundColor: "#F9FAFB",
-    padding: 16,
-    borderRadius: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: "#3B82F6",
-  },
-  quoteIcon: {
-    marginTop: 2,
-  },
-  sentenceText: {
-    flex: 1,
-    fontSize: 16,
-    color: "#374151",
-    lineHeight: 26,
-  },
-  highlightedWord: {
-    fontWeight: "700",
-    color: "#2563EB",
-    backgroundColor: "#DBEAFE",
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  conversationSection: {
-    marginTop: 24,
-    paddingTop: 24,
-    borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
-  },
-  conversationHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 16,
-  },
-  conversationTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#3B82F6",
-  },
-});

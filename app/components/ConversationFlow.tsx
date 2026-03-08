@@ -1,12 +1,12 @@
 import { predictConversationFlow } from "@/services/groqService";
+import { COLORS, SPACING } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 interface ConversationFlowProps {
@@ -56,82 +56,225 @@ export default function ConversationFlow({
   };
 
   return (
-    <View style={styles.wrapper}>
+    <View style={{ marginBottom: 12 }}>
+      {/* Starter Card */}
       <TouchableOpacity
         onPress={handleToggle}
-        style={styles.starterCard}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: COLORS.background.tertiary,
+          padding: SPACING.md,
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: COLORS.border.secondary,
+        }}
         disabled={loading}
+        activeOpacity={0.7}
       >
-        <View style={styles.starterContent}>
-          <View style={styles.starterIconContainer}>
-            <Ionicons name="chatbubble-ellipses" size={18} color="#3B82F6" />
+        <View style={{
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        }}>
+          <View style={{
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: `${COLORS.accent.secondary}33`,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <Ionicons name="chatbubble-ellipses" size={18} color={COLORS.accent.secondary} />
           </View>
-          <Text style={styles.starterText}>{starter}</Text>
+          <Text style={{
+            flex: 1,
+            fontSize: 15,
+            color: COLORS.text.primary,
+            lineHeight: 22,
+            fontWeight: '500',
+          }}>
+            {starter}
+          </Text>
         </View>
+        
         {loading ? (
-          <ActivityIndicator size="small" color="#3B82F6" />
+          <ActivityIndicator size="small" color={COLORS.accent.secondary} />
         ) : (
           <Ionicons
             name={isExpanded ? "chevron-up-circle" : "chevron-down-circle"}
             size={24}
-            color="#3B82F6"
+            color={COLORS.accent.secondary}
           />
         )}
       </TouchableOpacity>
 
+      {/* Flow Container */}
       {isExpanded && flows.length > 0 && (
-        <View style={styles.flowContainer}>
+        <View style={{ marginTop: 12, gap: SPACING.md }}>
           {flows.map((flow, idx) => (
-            <View key={idx} style={styles.flowItem}>
-              <View style={styles.responseBox}>
-                <View style={styles.flowLabelContainer}>
-                  <Ionicons name="person" size={14} color="#6366F1" />
-                  <Text style={styles.responseLabel}>They might say</Text>
+            <View 
+              key={idx} 
+              style={{
+                backgroundColor: COLORS.background.elevated,
+                borderRadius: 16,
+                padding: SPACING.md,
+                borderWidth: 1,
+                borderColor: COLORS.border.primary,
+              }}
+            >
+              {/* Their Response */}
+              <View style={{ gap: 8 }}>
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                }}>
+                  <View style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 12,
+                    backgroundColor: `${COLORS.accent.info}33`,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Ionicons name="person" size={12} color={COLORS.accent.info} />
+                  </View>
+                  <Text style={{
+                    fontSize: 12,
+                    color: COLORS.accent.info,
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                  }}>
+                    They might say
+                  </Text>
                 </View>
-                <Text style={styles.responseText}>{flow.theirResponse}</Text>
+                <Text style={{
+                  fontSize: 15,
+                  color: COLORS.text.secondary,
+                  fontStyle: 'italic',
+                  lineHeight: 22,
+                  paddingLeft: 30,
+                }}>
+                  {flow.theirResponse}
+                </Text>
               </View>
-              <View style={styles.flowArrow}>
-                <Ionicons name="arrow-down" size={16} color="#9CA3AF" />
+              
+              {/* Arrow */}
+              <View style={{
+                alignItems: 'center',
+                paddingVertical: 8,
+              }}>
+                <Ionicons name="arrow-down" size={16} color={COLORS.text.disabled} />
               </View>
-              <View style={styles.followUpBox}>
-                <View style={styles.flowLabelContainer}>
-                  <Ionicons name="person-circle" size={14} color="#10B981" />
-                  <Text style={styles.followUpLabel}>You could reply</Text>
+              
+              {/* Your Follow Up */}
+              <View style={{ gap: 8 }}>
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                }}>
+                  <View style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 12,
+                    backgroundColor: `${COLORS.accent.success}33`,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Ionicons name="person-circle" size={12} color={COLORS.accent.success} />
+                  </View>
+                  <Text style={{
+                    fontSize: 12,
+                    color: COLORS.accent.success,
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                  }}>
+                    You could reply
+                  </Text>
                 </View>
-                <Text style={styles.followUpText}>{flow.yourFollowUp}</Text>
+                <Text style={{
+                  fontSize: 15,
+                  color: COLORS.text.primary,
+                  lineHeight: 22,
+                  fontWeight: '500',
+                  paddingLeft: 30,
+                }}>
+                  {flow.yourFollowUp}
+                </Text>
               </View>
-              <View style={styles.reactionContainer}>
-                <Text style={styles.reactionPrompt}>Helpful?</Text>
-                <View style={styles.reactionButtons}>
+              
+              {/* Reaction Buttons */}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginTop: SPACING.md,
+                paddingTop: SPACING.md,
+                borderTopWidth: 1,
+                borderTopColor: COLORS.border.subtle,
+              }}>
+                <Text style={{
+                  fontSize: 13,
+                  color: COLORS.text.tertiary,
+                  fontWeight: '500',
+                }}>
+                  Helpful?
+                </Text>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
                   <TouchableOpacity
                     onPress={() => handleReaction(idx, "up")}
-                    style={[
-                      styles.reactionButton,
-                      reactions[idx] === "up" && styles.reactionButtonActive,
-                    ]}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 20,
+                      backgroundColor: reactions[idx] === "up" 
+                        ? `${COLORS.accent.success}33` 
+                        : COLORS.background.tertiary,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 2,
+                      borderColor: reactions[idx] === "up" 
+                        ? COLORS.accent.success 
+                        : 'transparent',
+                    }}
+                    activeOpacity={0.7}
                   >
-                    <Text
-                      style={[
-                        styles.reactionEmoji,
-                        reactions[idx] === "up" && styles.reactionEmojiActive,
-                      ]}
-                    >
+                    <Text style={{ 
+                      fontSize: 20, 
+                      opacity: reactions[idx] === "up" ? 1 : 0.4 
+                    }}>
                       👍
                     </Text>
                   </TouchableOpacity>
+                  
                   <TouchableOpacity
                     onPress={() => handleReaction(idx, "down")}
-                    style={[
-                      styles.reactionButton,
-                      reactions[idx] === "down" && styles.reactionButtonActive,
-                    ]}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 20,
+                      backgroundColor: reactions[idx] === "down" 
+                        ? `${COLORS.accent.error}33` 
+                        : COLORS.background.tertiary,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 2,
+                      borderColor: reactions[idx] === "down" 
+                        ? COLORS.accent.error 
+                        : 'transparent',
+                    }}
+                    activeOpacity={0.7}
                   >
-                    <Text
-                      style={[
-                        styles.reactionEmoji,
-                        reactions[idx] === "down" && styles.reactionEmojiActive,
-                      ]}
-                    >
+                    <Text style={{ 
+                      fontSize: 20, 
+                      opacity: reactions[idx] === "down" ? 1 : 0.4 
+                    }}>
                       👎
                     </Text>
                   </TouchableOpacity>
@@ -144,133 +287,3 @@ export default function ConversationFlow({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: {
-    marginBottom: 12,
-  },
-  starterCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#F8FAFC",
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  starterContent: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  starterIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#DBEAFE",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  starterText: {
-    flex: 1,
-    fontSize: 15,
-    color: "#1E293B",
-    lineHeight: 22,
-    fontWeight: "500",
-  },
-  flowContainer: {
-    marginTop: 12,
-    gap: 16,
-  },
-  flowItem: {
-    backgroundColor: "#FAFAFA",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  responseBox: {
-    gap: 8,
-  },
-  flowLabelContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  responseLabel: {
-    fontSize: 12,
-    color: "#6366F1",
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  responseText: {
-    fontSize: 15,
-    color: "#475569",
-    fontStyle: "italic",
-    lineHeight: 22,
-    paddingLeft: 20,
-  },
-  flowArrow: {
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  followUpBox: {
-    gap: 8,
-  },
-  followUpLabel: {
-    fontSize: 12,
-    color: "#10B981",
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  followUpText: {
-    fontSize: 15,
-    color: "#1F2937",
-    lineHeight: 22,
-    fontWeight: "500",
-    paddingLeft: 20,
-  },
-  reactionContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-  },
-  reactionPrompt: {
-    fontSize: 13,
-    color: "#6B7280",
-    fontWeight: "500",
-  },
-  reactionButtons: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  reactionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#F3F4F6",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  reactionButtonActive: {
-    backgroundColor: "#DBEAFE",
-    borderColor: "#3B82F6",
-  },
-  reactionEmoji: {
-    fontSize: 20,
-    opacity: 0.4,
-  },
-  reactionEmojiActive: {
-    opacity: 1,
-  },
-});
