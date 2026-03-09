@@ -10,8 +10,30 @@ export interface SavedWord {
 
 const STORAGE_KEY = "@saved_words";
 const LEVEL_KEY = "@english_level";
+const LANGUAGE_KEY = "@learning_language";
 
 export type EnglishLevel = "beginner" | "intermediate" | "advanced";
+export type LearningLanguage = "hindi" | "urdu" | "english";
+
+export async function getLearningLanguage(): Promise<LearningLanguage | null> {
+  try {
+    const language = await AsyncStorage.getItem(LANGUAGE_KEY);
+    return language as LearningLanguage | null;
+  } catch (error) {
+    console.error("Error getting learning language:", error);
+    return null;
+  }
+}
+
+export async function saveLearningLanguage(
+  language: LearningLanguage,
+): Promise<void> {
+  try {
+    await AsyncStorage.setItem(LANGUAGE_KEY, language);
+  } catch (error) {
+    console.error("Error saving learning language:", error);
+  }
+}
 
 export async function getEnglishLevel(): Promise<EnglishLevel | null> {
   try {

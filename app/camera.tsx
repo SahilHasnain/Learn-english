@@ -1,5 +1,8 @@
 import { analyzeImageWithGroq } from "@/services/groqService";
-import { getEnglishLevel } from "@/services/storageService";
+import {
+  getEnglishLevel,
+  getLearningLanguage,
+} from "@/services/storageService";
 import { COLORS, SHADOWS, SPACING } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -120,9 +123,11 @@ export default function CameraScreen() {
       }
 
       const level = await getEnglishLevel();
+      const language = await getLearningLanguage();
       const results = await analyzeImageWithGroq(
         photo.base64,
         level || "intermediate",
+        language || "hindi",
       );
 
       // Navigate to results screen

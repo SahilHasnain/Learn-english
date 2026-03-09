@@ -1,5 +1,6 @@
 import { generateFlashback } from "@/services/groqService";
 import { getAllLearnedWords } from "@/services/learningJourneyService";
+import { getLearningLanguage } from "@/services/storageService";
 import { COLORS, SHADOWS, SPACING } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
@@ -36,9 +37,11 @@ export default function Flashback() {
 
       // Pick a random word
       const randomWord = words[Math.floor(Math.random() * words.length)];
+      const language = await getLearningLanguage();
       const sentence = await generateFlashback(
         randomWord.word,
         randomWord.hindiMeaning,
+        language || "hindi",
       );
 
       setFlashback({

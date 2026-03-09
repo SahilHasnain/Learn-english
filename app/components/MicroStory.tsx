@@ -1,13 +1,9 @@
 import { generateMicroStory } from "@/services/groqService";
+import { getLearningLanguage } from "@/services/storageService";
 import { COLORS, SHADOWS, SPACING } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useState } from "react";
-import {
-    ActivityIndicator,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 interface MicroStoryProps {
   words: { word: string; hindiMeaning: string }[];
@@ -26,7 +22,8 @@ export default function MicroStory({ words }: MicroStoryProps) {
     setIsExpanded(true);
     setLoading(true);
     try {
-      const result = await generateMicroStory(words);
+      const language = await getLearningLanguage();
+      const result = await generateMicroStory(words, language || "hindi");
       setStory(result);
     } catch (error) {
       console.error("Error loading micro story:", error);
@@ -39,15 +36,17 @@ export default function MicroStory({ words }: MicroStoryProps) {
   const renderStoryText = (text: string) => {
     const parts = text.split(/(\*\*[^*]+\*\*)/g);
     return (
-      <Text style={{ fontSize: 16, lineHeight: 26, color: COLORS.text.secondary }}>
+      <Text
+        style={{ fontSize: 16, lineHeight: 26, color: COLORS.text.secondary }}
+      >
         {parts.map((part, i) => {
           if (part.startsWith("**") && part.endsWith("**")) {
             return (
-              <Text 
-                key={i} 
-                style={{ 
-                  fontWeight: '800', 
-                  color: COLORS.accent.warning 
+              <Text
+                key={i}
+                style={{
+                  fontWeight: "800",
+                  color: COLORS.accent.warning,
                 }}
               >
                 {part.slice(2, -2)}
@@ -64,9 +63,9 @@ export default function MicroStory({ words }: MicroStoryProps) {
     <>
       <TouchableOpacity
         style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
           backgroundColor: `${COLORS.accent.warning}1A`,
           padding: SPACING.md,
           borderRadius: 16,
@@ -78,35 +77,48 @@ export default function MicroStory({ words }: MicroStoryProps) {
         disabled={loading}
         activeOpacity={0.7}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-          <View style={{
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: `${COLORS.accent.warning}33`,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 12,
+            flex: 1,
+          }}
+        >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: `${COLORS.accent.warning}33`,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <Ionicons name="book" size={20} color={COLORS.accent.warning} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{
-              fontSize: 16,
-              fontWeight: '700',
-              color: COLORS.accent.warning,
-              marginBottom: 2,
-            }}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "700",
+                color: COLORS.accent.warning,
+                marginBottom: 2,
+              }}
+            >
               Live the Words
             </Text>
-            <Text style={{
-              fontSize: 13,
-              color: COLORS.text.secondary,
-            }}>
+            <Text
+              style={{
+                fontSize: 13,
+                color: COLORS.text.secondary,
+              }}
+            >
               A tiny story with all your words
             </Text>
           </View>
         </View>
-        
+
         {loading ? (
           <ActivityIndicator size="small" color={COLORS.accent.warning} />
         ) : (
@@ -119,20 +131,24 @@ export default function MicroStory({ words }: MicroStoryProps) {
       </TouchableOpacity>
 
       {isExpanded && story && (
-        <View style={{
-          backgroundColor: COLORS.background.secondary,
-          borderRadius: 16,
-          marginBottom: SPACING.lg,
-          flexDirection: 'row',
-          overflow: 'hidden',
-          borderWidth: 1,
-          borderColor: COLORS.border.subtle,
-          ...SHADOWS.md,
-        }}>
-          <View style={{
-            width: 4,
-            backgroundColor: COLORS.accent.warning,
-          }} />
+        <View
+          style={{
+            backgroundColor: COLORS.background.secondary,
+            borderRadius: 16,
+            marginBottom: SPACING.lg,
+            flexDirection: "row",
+            overflow: "hidden",
+            borderWidth: 1,
+            borderColor: COLORS.border.subtle,
+            ...SHADOWS.md,
+          }}
+        >
+          <View
+            style={{
+              width: 4,
+              backgroundColor: COLORS.accent.warning,
+            }}
+          />
           <View style={{ flex: 1, padding: SPACING.lg }}>
             {renderStoryText(story)}
           </View>

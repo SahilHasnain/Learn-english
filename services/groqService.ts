@@ -42,9 +42,74 @@ interface RelatedWordsCluster {
   words: RelatedWord[];
 }
 
+function getMeaningLanguagePrompt(language: string): string {
+  if (language === "urdu") {
+    return `Also provide the Urdu meaning in Roman Urdu — the way Pakistanis ACTUALLY speak in daily life.
+
+CRITICAL URDU RULES:
+- Write Urdu the way Pakistanis naturally speak — casual, everyday Urdu
+- Give a short, natural phrase or word — NOT a dictionary definition
+- If people commonly use the English word itself, mention it
+
+Examples of CORRECT natural Urdu translations:
+- curtain → "parda"
+- cup → "cup / pyaala"
+- book → "kitaab"
+- water → "paani"
+- food → "khaana"
+- big → "bara"
+- small → "chhota"
+- window → "khirki"
+- door → "darwaaza"
+- beautiful → "khoobsurat"
+- remember → "yaad rakhna"
+- tired → "thaka hua"`;
+  }
+  if (language === "english") {
+    return `Also provide a simple English definition — short and clear, like how you'd explain to a friend.
+
+Examples:
+- curtain → "cloth that covers a window"
+- cup → "small container for drinking"
+- beautiful → "very nice to look at"
+- tired → "feeling like you need rest"`;
+  }
+  // Default: Hindi
+  return `Also provide the Hindi meaning in Roman Hindi — the way Indians ACTUALLY speak in daily life. Think of how a person in Delhi, Mumbai, or any Indian city would say it casually.
+
+CRITICAL HINDI RULES:
+- Write Hindi the way Indians naturally speak — use common Hinglish if that's more natural
+- Give a short, natural phrase or word — NOT a dictionary definition
+- If Indians commonly use the English word itself in conversation, mention it: e.g., "table" → "table (mez bhi bolte hain)"
+- Prefer the word that would come to mind FIRST for a Hindi speaker
+
+Examples of CORRECT natural Hindi translations:
+- curtain → "parda"
+- cup → "cup / pyaala"
+- book → "kitaab"
+- water → "paani"
+- food → "khaana"
+- big → "bada"
+- small → "chhota"
+- window → "khidki"
+- door → "darwaaza"
+- table → "table / mez"
+- chair → "kursi"
+- beautiful → "khoobsurat"
+- remember → "yaad rakhna"
+- tired → "thaka hua"`;
+}
+
+function getMeaningFieldLabel(language: string): string {
+  if (language === "urdu") return "natural urdu as Pakistanis speak";
+  if (language === "english") return "simple english definition";
+  return "natural hindi as Indians speak";
+}
+
 export async function analyzeImageWithGroq(
   base64Image: string,
   userLevel: "beginner" | "intermediate" | "advanced" = "intermediate",
+  language: string = "hindi",
 ): Promise<WordSuggestion[]> {
   console.log("=== GROQ API DEBUG ===");
 
@@ -73,35 +138,15 @@ export async function analyzeImageWithGroq(
 - intermediate: moderately challenging words, natural sentences
 - advanced: sophisticated vocabulary, complex sentences
 
-For each word, create a natural example sentence AND 1 conversation starter that someone could actually use in real life. Also provide the Hindi meaning in Roman Hindi — the way Indians ACTUALLY speak in daily life. Think of how a person in Delhi, Mumbai, or any Indian city would say it casually.
+For each word, create a natural example sentence AND 1 conversation starter that someone could actually use in real life.
 
-CRITICAL HINDI RULES:
-- Write Hindi the way Indians naturally speak — use common Hinglish if that's more natural
-- Give a short, natural phrase or word — NOT a dictionary definition
-- If Indians commonly use the English word itself in conversation, mention it: e.g., "table" → "table (mez bhi bolte hain)"
-- Prefer the word that would come to mind FIRST for a Hindi speaker
-
-Examples of CORRECT natural Hindi translations:
-- curtain → "parda"
-- cup → "cup / pyaala"
-- book → "kitaab"
-- water → "paani"
-- food → "khaana"
-- big → "bada"
-- small → "chhota"
-- window → "khidki"
-- door → "darwaaza"
-- table → "table / mez"
-- chair → "kursi"
-- beautiful → "khoobsurat"
-- remember → "yaad rakhna"
-- tired → "thaka hua"
+${getMeaningLanguagePrompt(language)}
 
 Return ONLY a valid JSON array in this exact format, no other text:
 [
-  {"word": "word1", "level": "beginner", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "natural hindi as Indians speak"},
-  {"word": "word2", "level": "intermediate", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "natural hindi as Indians speak"},
-  {"word": "word3", "level": "advanced", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "natural hindi as Indians speak"}
+  {"word": "word1", "level": "beginner", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "${getMeaningFieldLabel(language)}"},
+  {"word": "word2", "level": "intermediate", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "${getMeaningFieldLabel(language)}"},
+  {"word": "word3", "level": "advanced", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "${getMeaningFieldLabel(language)}"}
 ]`,
               },
               {
@@ -247,6 +292,7 @@ Return ONLY a valid JSON object in this exact format, no other text:
 
 export async function getRelatedWords(
   words: string[],
+  language: string = "hindi",
 ): Promise<RelatedWordsCluster[]> {
   try {
     const GROQ_API_KEY = await getGroqApiKey();
@@ -263,17 +309,17 @@ export async function getRelatedWords(
             role: "user",
             content: `Given these words: ${words.join(", ")}
 
-Create 2 small clusters of related vocabulary. For each cluster, provide exactly 2 related words with their relationship, a short example, and the Hindi meaning in natural Roman Hindi (the way Indians actually speak in daily life).
+Create 2 small clusters of related vocabulary. For each cluster, provide exactly 2 related words with their relationship, a short example, and the meaning.
 
-HINDI RULES: Use the word Indians would actually say in conversation. If they commonly use the English word, say so.
+${language === "urdu" ? "URDU RULES: Write meaning in Roman Urdu — the way Pakistanis actually speak." : language === "english" ? "MEANING RULES: Give a simple, short English definition." : "HINDI RULES: Use the word Indians would actually say in conversation. If they commonly use the English word, say so. Write in Roman Hindi."}
 
 Return ONLY a valid JSON array in this exact format, no other text:
 [
   {
     "category": "Category Name",
     "words": [
-      {"word": "related word", "relation": "how it relates", "example": "short example", "hindiMeaning": "natural hindi"},
-      {"word": "related word", "relation": "relationship", "example": "short example", "hindiMeaning": "natural hindi"}
+      {"word": "related word", "relation": "how it relates", "example": "short example", "hindiMeaning": "${getMeaningFieldLabel(language)}"},
+      {"word": "related word", "relation": "relationship", "example": "short example", "hindiMeaning": "${getMeaningFieldLabel(language)}"}
     ]
   }
 ]`,
@@ -325,6 +371,7 @@ Return ONLY a valid JSON array in this exact format, no other text:
 
 export async function generateMicroStory(
   words: { word: string; hindiMeaning: string }[],
+  language: string = "hindi",
 ): Promise<string> {
   try {
     const GROQ_API_KEY = await getGroqApiKey();
@@ -349,11 +396,11 @@ export async function generateMicroStory(
 Rules:
 - Use "you" perspective — make the reader feel the moment
 - Bold each vocabulary word with **double asterisks**
-- After each bolded word, add Hindi meaning in parentheses: **bookmark** (panne ka nishan)
+- After each bolded word, add ${language === "english" ? "simple English meaning" : language === "urdu" ? "Roman Urdu meaning" : "Hindi meaning"} in parentheses: **bookmark** (${language === "english" ? "a saved page marker" : language === "urdu" ? "nishaan" : "panne ka nishan"})
 - Keep it simple and natural — easy to read quickly
 - Be creative with the opening
 
-Words with Hindi meanings: ${wordList}
+Words with meanings: ${wordList}
 
 Return ONLY the story text, nothing else. No title, no label, no quotes.`,
           },
@@ -385,6 +432,7 @@ Return ONLY the story text, nothing else. No title, no label, no quotes.`,
 export async function generateFlashback(
   word: string,
   hindiMeaning: string,
+  language: string = "hindi",
 ): Promise<string> {
   try {
     const GROQ_API_KEY = await getGroqApiKey();
@@ -400,7 +448,7 @@ export async function generateFlashback(
         messages: [
           {
             role: "user",
-            content: `Write exactly ONE short, vivid English sentence using the word "${word}" (Hindi: ${hindiMeaning}). The sentence should:
+            content: `Write exactly ONE short, vivid English sentence using the word "${word}" (${language === "english" ? "Meaning" : language === "urdu" ? "Urdu" : "Hindi"}: ${hindiMeaning}). The sentence should:
 - Be a completely NEW and creative usage (not a textbook example)
 - Feel like something from real life — a scene, moment, or observation
 - Be simple enough for an English learner but interesting enough to remember
