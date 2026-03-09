@@ -1,7 +1,7 @@
-import { analyzeImageWithGroq } from "@/services/groqService";
+import { analyzeImageFast } from "@/services/groqService";
 import {
-  getEnglishLevel,
-  getLearningLanguage,
+    getEnglishLevel,
+    getLearningLanguage,
 } from "@/services/storageService";
 import { COLORS, SHADOWS, SPACING } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,11 +9,11 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -124,16 +124,19 @@ export default function CameraScreen() {
 
       const level = await getEnglishLevel();
       const language = await getLearningLanguage();
-      const results = await analyzeImageWithGroq(
+      const fastResults = await analyzeImageFast(
         photo.base64,
         level || "intermediate",
         language || "hindi",
       );
 
-      // Navigate to results screen
+      // Navigate immediately with partial data
       router.push({
         pathname: "/results",
-        params: { suggestions: JSON.stringify(results) },
+        params: {
+          suggestions: JSON.stringify(fastResults),
+          language: language || "hindi",
+        },
       });
     } catch (error) {
       console.error("Error analyzing photo:", error);

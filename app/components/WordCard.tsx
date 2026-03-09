@@ -1,16 +1,17 @@
 import { COLORS, SHADOWS, SPACING } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import ConversationFlow from "./ConversationFlow";
 
 interface WordCardProps {
   word: string;
   level: "beginner" | "intermediate" | "advanced";
-  sentence: string;
-  conversationStarter: string;
+  sentence?: string;
+  conversationStarter?: string;
   hindiMeaning: string;
   pronunciation?: string;
+  isEnriching?: boolean;
 }
 
 export default function WordCard({
@@ -20,6 +21,7 @@ export default function WordCard({
   conversationStarter,
   hindiMeaning,
   pronunciation,
+  isEnriching,
 }: WordCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -176,79 +178,116 @@ export default function WordCard({
       </View>
 
       {/* Sentence Container */}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "flex-start",
-          gap: 8,
-          backgroundColor: COLORS.background.tertiary,
-          padding: SPACING.md,
-          borderRadius: 12,
-          borderLeftWidth: 3,
-          borderLeftColor: COLORS.accent.secondary,
-        }}
-      >
-        <Ionicons
-          name="chatbox-ellipses-outline"
-          size={16}
-          color={COLORS.text.tertiary}
-          style={{ marginTop: 2 }}
-        />
-        {highlightWord(sentence, word)}
-      </View>
-
-      {/* Conversation Section */}
-      <View
-        style={{
-          marginTop: SPACING.lg,
-          paddingTop: SPACING.lg,
-          borderTopWidth: 1,
-          borderTopColor: COLORS.border.subtle,
-        }}
-      >
+      {isEnriching ? (
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
             gap: 10,
-            marginBottom: SPACING.md,
+            backgroundColor: COLORS.background.tertiary,
+            padding: SPACING.md,
+            borderRadius: 12,
+            borderLeftWidth: 3,
+            borderLeftColor: COLORS.accent.secondary,
+          }}
+        >
+          <ActivityIndicator size="small" color={COLORS.accent.secondary} />
+          <Text style={{ fontSize: 14, color: COLORS.text.tertiary }}>
+            Loading example...
+          </Text>
+        </View>
+      ) : sentence ? (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "flex-start",
+            gap: 8,
+            backgroundColor: COLORS.background.tertiary,
+            padding: SPACING.md,
+            borderRadius: 12,
+            borderLeftWidth: 3,
+            borderLeftColor: COLORS.accent.secondary,
+          }}
+        >
+          <Ionicons
+            name="chatbox-ellipses-outline"
+            size={16}
+            color={COLORS.text.tertiary}
+            style={{ marginTop: 2 }}
+          />
+          {highlightWord(sentence, word)}
+        </View>
+      ) : null}
+
+      {/* Conversation Section */}
+      {isEnriching ? (
+        <View
+          style={{
+            marginTop: SPACING.lg,
+            paddingTop: SPACING.lg,
+            borderTopWidth: 1,
+            borderTopColor: COLORS.border.subtle,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <ActivityIndicator size="small" color={COLORS.accent.secondary} />
+          <Text style={{ fontSize: 14, color: COLORS.text.tertiary }}>
+            Loading conversation...
+          </Text>
+        </View>
+      ) : conversationStarter ? (
+        <View
+          style={{
+            marginTop: SPACING.lg,
+            paddingTop: SPACING.lg,
+            borderTopWidth: 1,
+            borderTopColor: COLORS.border.subtle,
           }}
         >
           <View
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: 16,
-              backgroundColor: `${COLORS.accent.secondary}33`,
+              flexDirection: "row",
               alignItems: "center",
-              justifyContent: "center",
+              gap: 10,
+              marginBottom: SPACING.md,
             }}
           >
-            <Ionicons
-              name="chatbubbles"
-              size={16}
-              color={COLORS.accent.secondary}
-            />
+            <View
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: `${COLORS.accent.secondary}33`,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons
+                name="chatbubbles"
+                size={16}
+                color={COLORS.accent.secondary}
+              />
+            </View>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "700",
+                color: COLORS.accent.secondary,
+              }}
+            >
+              Start a Conversation
+            </Text>
           </View>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "700",
-              color: COLORS.accent.secondary,
-            }}
-          >
-            Start a Conversation
-          </Text>
-        </View>
 
-        {conversationStarter && (
           <ConversationFlow
             starter={conversationStarter}
             isExpanded={isExpanded}
             onToggle={() => setIsExpanded(!isExpanded)}
           />
-        )}
-      </View>
+        </View>
+      ) : null}
     </View>
   );
 }

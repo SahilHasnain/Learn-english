@@ -1,8 +1,16 @@
+import { useAppStore } from "@/services/store";
 import { Stack } from "expo-router";
+import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "../global.css";
 
 export default function RootLayout() {
+  const fetchApiKey = useAppStore((s) => s.fetchApiKey);
+
+  useEffect(() => {
+    fetchApiKey();
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Stack screenOptions={{ headerShown: false }}>
