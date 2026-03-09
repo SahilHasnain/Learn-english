@@ -3,19 +3,27 @@ import KeyboardSpacer from "@/app/components/KeyboardSpacer";
 import MicroStory from "@/app/components/MicroStory";
 import RelatedWordsSection from "@/app/components/RelatedWordsSection";
 import WordCard from "@/app/components/WordCard";
+import { enrichWord } from "@/services/groqService";
 import { saveLearnedWords } from "@/services/learningJourneyService";
 import { COLORS, SHADOWS, SPACING } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
-import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 interface WordSuggestion {
   word: string;
   level: "beginner" | "intermediate" | "advanced";
-  sentence: string;
-  conversationStarter: string;
+  sentence?: string;
+  conversationStarter?: string;
   hindiMeaning: string;
   pronunciation?: string;
 }
@@ -24,17 +32,26 @@ export default function ResultsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [isChatModalVisible, setIsChatModalVisible] = useState(false);
+  const [enrichedWords, setEnrichedWords] = useState<Record<string, {
+    sentence: string;
+    conversationStarter: string;
+    pronunciation: string;
+  }>>({});
+  const [enrichingWords, setEnrichingWords] = useState<Set<string>>(new Set());
+  const enrichStarted = useRef(false);
 
   const suggestions: WordSuggestion[] = useMemo(
     () => (params.suggestions ? JSON.parse(params.suggestions as string) : []),
     [params.suggestions],
   );
 
+  const language = (params.language as string) || "hindi";
+
   const words = useMemo(() => suggestions.map((s) => s.word), [suggestions]);
 
+  // Save learned words on mount
   useEffect(() => {
     if (suggestions.length > 0) {
-      // Save learned words to journey
       const learnedWords = suggestions.map((s) => ({
         word: s.word,
         hindiMeaning: s.hindiMeaning,
@@ -44,6 +61,52 @@ export default function ResultsScreen() {
       saveLearnedWords(learnedWords);
     }
   }, [suggestions]);
+
+  // Phase 2: Enrich words in parallel after mount
+  useEffect(() => {
+    if (enrichStarted.current || suggestions.length === 0) return;
+    // If words already have sentences (old flow / full data), skip enrichment
+    if (suggestions[0]?.sentence) return;
+    enrichStarted.current = true;
+
+    const enrichAll = async () => {
+      setEnrichingWords(new Set(suggestions.map((s) => s.word)));
+
+      const promises = suggestions.map(async (s) => {
+        try {
+          const result = await enrichWord(s.word, s.level, language);
+          setEnrichedWords((prev) => ({ ...prev, [s.word]: result }));
+        } catch (error) {
+          console.error(`Failed to enrich ${s.word}:`, error);
+        } finally {
+          setEnrichingWords((prev) => {
+            const next = new Set(prev);
+            next.delete(s.word);
+            return next;
+          });
+        }
+      });
+
+      await Promise.all(promises);
+    };
+
+    enrichAll();
+  }, [suggestions, language]);
+
+  // Merge fast results with enriched data
+  const mergedSuggestions = useMemo(() => {
+    return suggestions.map((s) => {
+      const enriched = enrichedWords[s.word];
+      return {
+        ...s,
+        sentence: s.sentence || enriched?.sentence || "",
+        conversationStarter: s.conversationStarter || enriched?.conversationStarter || "",
+        pronunciation: s.pronunciation || enriched?.pronunciation || "",
+      };
+    });
+  }, [suggestions, enrichedWords]);
+
+  const isAnyEnriching = enrichingWords.size > 0;
 
   return (
     <SafeAreaView
@@ -78,15 +141,20 @@ export default function ResultsScreen() {
           <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>
 
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: "600",
-            color: COLORS.text.primary,
-          }}
-        >
-          Word Suggestions
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "600",
+              color: COLORS.text.primary,
+            }}
+          >
+            Word Suggestions
+          </Text>
+          {isAnyEnriching && (
+            <ActivityIndicator size="small" color={COLORS.accent.primary} />
+          )}
+        </View>
 
         <TouchableOpacity
           onPress={() => router.push("/journey")}
@@ -157,8 +225,8 @@ export default function ResultsScreen() {
                 color: COLORS.text.primary,
               }}
             >
-              {suggestions.length} {suggestions.length === 1 ? "word" : "words"}{" "}
-              found
+              {mergedSuggestions.length}{" "}
+              {mergedSuggestions.length === 1 ? "word" : "words"} found
             </Text>
           </View>
 
@@ -187,7 +255,7 @@ export default function ResultsScreen() {
         </View>
 
         {/* Word Cards */}
-        {suggestions.map((item, index) => (
+        {mergedSuggestions.map((item, index) => (
           <WordCard
             key={index}
             word={item.word}
@@ -196,12 +264,13 @@ export default function ResultsScreen() {
             conversationStarter={item.conversationStarter}
             hindiMeaning={item.hindiMeaning}
             pronunciation={item.pronunciation}
+            isEnriching={enrichingWords.has(item.word)}
           />
         ))}
 
         {/* Micro Story */}
         <MicroStory
-          words={suggestions.map((s) => ({
+          words={mergedSuggestions.map((s) => ({
             word: s.word,
             hindiMeaning: s.hindiMeaning,
           }))}

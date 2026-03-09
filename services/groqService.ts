@@ -1,14 +1,11 @@
-import { getApiKey } from "./appwriteConfig";
+import { useAppStore } from "./store";
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-let GROQ_API_KEY: string | null = null;
-
-async function getGroqApiKey(): Promise<string> {
-  if (!GROQ_API_KEY) {
-    GROQ_API_KEY = await getApiKey("groq");
-  }
-  return GROQ_API_KEY;
+function getGroqApiKey(): string {
+  const key = useAppStore.getState().groqApiKey;
+  if (!key) throw new Error("Groq API key not loaded yet. Ensure fetchApiKey() was called on app start.");
+  return key;
 }
 
 interface WordSuggestion {
@@ -107,6 +104,124 @@ function getMeaningFieldLabel(language: string): string {
   return "natural hindi as Indians speak";
 }
 
+interface FastWordResult {
+  word: string;
+  level: "beginner" | "intermediate" | "advanced";
+  hindiMeaning: string;
+}
+
+export async function analyzeImageFast(
+  base64Image: string,
+  userLevel: "beginner" | "intermediate" | "advanced" = "intermediate",
+  language: string = "hindi",
+): Promise<FastWordResult[]> {
+  try {
+    const GROQ_API_KEY = getGroqApiKey();
+    const response = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `Analyze this image and identify the main object. Then provide exactly 3 English vocabulary words related to this object. The user's English level is "${userLevel}", so adjust word difficulty accordingly:
+- beginner: simple everyday words
+- intermediate: moderately challenging words
+- advanced: sophisticated vocabulary
+
+${getMeaningLanguagePrompt(language)}
+
+Return ONLY a valid JSON array in this exact format, no other text:
+[
+  {"word": "word1", "level": "beginner", "hindiMeaning": "${getMeaningFieldLabel(language)}"},
+  {"word": "word2", "level": "intermediate", "hindiMeaning": "${getMeaningFieldLabel(language)}"},
+  {"word": "word3", "level": "advanced", "hindiMeaning": "${getMeaningFieldLabel(language)}"}
+]`,
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${base64Image}`,
+                },
+              },
+            ],
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 200,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Groq API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content;
+    if (!content) throw new Error("No content in response");
+    return JSON.parse(content);
+  } catch (error) {
+    console.error("Error in fast image analysis:", error);
+    throw error;
+  }
+}
+
+export async function enrichWord(
+  word: string,
+  level: string,
+  language: string = "hindi",
+): Promise<{ sentence: string; conversationStarter: string; pronunciation: string }> {
+  try {
+    const GROQ_API_KEY = getGroqApiKey();
+    const response = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "user",
+            content: `For the English word "${word}" (${level} level):
+
+1. Create a natural example sentence using this word. Adjust complexity for ${level} level.
+2. Create 1 conversation starter someone could actually use in real life in India/Pakistan — chai, traffic, family, street food, festivals, college, office situations.
+3. Provide a pronunciation hint — write how the word SOUNDS using simple Roman ${language === "urdu" ? "Urdu" : language === "english" ? "English" : "Hindi"} phonetics (NOT IPA). Capitalize the stressed syllable.
+   Examples: "sophisticated" → "so-FIS-ti-kay-ted", "curtain" → "KUR-ten"
+
+Return ONLY valid JSON, no other text:
+{"sentence": "...", "conversationStarter": "...", "pronunciation": "..."}`,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 200,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Groq API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content;
+    if (!content) throw new Error("No content in response");
+    return JSON.parse(content);
+  } catch (error) {
+    console.error(`Error enriching word "${word}":`, error);
+    return { sentence: "", conversationStarter: "", pronunciation: "" };
+  }
+}
+
 export async function analyzeImageWithGroq(
   base64Image: string,
   userLevel: "beginner" | "intermediate" | "advanced" = "intermediate",
@@ -115,7 +230,7 @@ export async function analyzeImageWithGroq(
   console.log("=== GROQ API DEBUG ===");
 
   try {
-    const GROQ_API_KEY = await getGroqApiKey();
+    const GROQ_API_KEY = getGroqApiKey();
     console.log("API Key loaded from database");
     console.log("API Key length:", GROQ_API_KEY?.length);
     console.log("API Key first 10 chars:", GROQ_API_KEY?.substring(0, 10));
@@ -201,11 +316,12 @@ Return ONLY a valid JSON array in this exact format, no other text:
   }
 }
 
+
 export async function predictConversationFlow(
   conversationStarter: string,
 ): Promise<ConversationFlow[]> {
   try {
-    const GROQ_API_KEY = await getGroqApiKey();
+    const GROQ_API_KEY = getGroqApiKey();
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
@@ -286,7 +402,7 @@ export async function fixEnglishMistakes(
   language: string = "hindi",
 ): Promise<MistakeFix> {
   try {
-    const GROQ_API_KEY = await getGroqApiKey();
+    const GROQ_API_KEY = getGroqApiKey();
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
@@ -338,7 +454,7 @@ export async function getRelatedWords(
   language: string = "hindi",
 ): Promise<RelatedWordsCluster[]> {
   try {
-    const GROQ_API_KEY = await getGroqApiKey();
+    const GROQ_API_KEY = getGroqApiKey();
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
@@ -417,7 +533,7 @@ export async function generateMicroStory(
   language: string = "hindi",
 ): Promise<string> {
   try {
-    const GROQ_API_KEY = await getGroqApiKey();
+    const GROQ_API_KEY = getGroqApiKey();
     const wordList = words
       .map((w) => `${w.word} (${w.hindiMeaning})`)
       .join(", ");
@@ -479,7 +595,7 @@ export async function generateFlashback(
   language: string = "hindi",
 ): Promise<string> {
   try {
-    const GROQ_API_KEY = await getGroqApiKey();
+    const GROQ_API_KEY = getGroqApiKey();
 
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
@@ -535,7 +651,7 @@ export async function generateReverseChallenge(
   language: string = "hindi",
 ): Promise<ReverseChallenge> {
   try {
-    const GROQ_API_KEY = await getGroqApiKey();
+    const GROQ_API_KEY = getGroqApiKey();
     const langName =
       language === "urdu"
         ? "Urdu"
@@ -613,7 +729,7 @@ export async function lookupWord(
   word: string,
   language: string = "hindi",
 ): Promise<DictionaryEntry> {
-  const GROQ_API_KEY = await getGroqApiKey();
+  const GROQ_API_KEY = getGroqApiKey();
   const meaningPrompt = getMeaningLanguagePrompt(language);
   const meaningLabel = getMeaningFieldLabel(language);
 
@@ -671,7 +787,7 @@ export async function reverseLookupWord(
   word: string,
   language: string = "hindi",
 ): Promise<DictionaryEntry> {
-  const GROQ_API_KEY = await getGroqApiKey();
+  const GROQ_API_KEY = getGroqApiKey();
 
   const langName =
     language === "urdu" ? "Urdu (Roman Urdu)" :

@@ -23,9 +23,11 @@ interface DictionarySheetProps {
   result: DictionaryEntry | null;
   loading: boolean;
   error: string | null;
+  saved: boolean;
   onSearch: (word: string) => void;
   onClose: () => void;
   onToggleMode: () => void;
+  onSave: () => void;
 }
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -42,9 +44,11 @@ export function DictionarySheet({
   result,
   loading,
   error,
+  saved,
   onSearch,
   onClose,
   onToggleMode,
+  onSave,
 }: DictionarySheetProps) {
   const inputRef = useRef<TextInput>(null);
 
@@ -233,6 +237,40 @@ export function DictionarySheet({
 
             {/* Result */}
             {result && <DictionaryResult entry={result} />}
+
+            {/* Save to Journey */}
+            {result && (
+              <TouchableOpacity
+                onPress={onSave}
+                disabled={saved}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  backgroundColor: saved ? `${COLORS.accent.success}20` : COLORS.accent.primary,
+                  paddingVertical: 14,
+                  borderRadius: 14,
+                  marginTop: SPACING.md,
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={saved ? "checkmark-circle" : "add-circle-outline"}
+                  size={20}
+                  color={saved ? COLORS.accent.success : COLORS.text.primary}
+                />
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: "600",
+                    color: saved ? COLORS.accent.success : COLORS.text.primary,
+                  }}
+                >
+                  {saved ? "Saved to Journey" : "Save to Journey"}
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {/* Empty state */}
             {!loading && !error && !result && (
