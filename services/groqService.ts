@@ -597,3 +597,131 @@ Return ONLY a valid JSON object, no other text:
     throw error;
   }
 }
+
+export interface DictionaryEntry {
+  word: string;
+  meaning: string;
+  pronunciation: string;
+  level: "beginner" | "intermediate" | "advanced";
+  partOfSpeech: string;
+  exampleSentence: string;
+  synonyms: string[];
+  antonyms: string[];
+}
+
+export async function lookupWord(
+  word: string,
+  language: string = "hindi",
+): Promise<DictionaryEntry> {
+  const GROQ_API_KEY = await getGroqApiKey();
+  const meaningPrompt = getMeaningLanguagePrompt(language);
+  const meaningLabel = getMeaningFieldLabel(language);
+
+  const response = await fetch(GROQ_API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${GROQ_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "user",
+          content: `You are a dictionary. Look up the English word "${word}".
+
+${meaningPrompt}
+
+Return ONLY a valid JSON object with these fields:
+{
+  "word": "${word}",
+  "meaning": "${meaningLabel} meaning of the word",
+  "pronunciation": "phonetic pronunciation hint like 'uh-BRUPT'",
+  "level": "beginner or intermediate or advanced — based on how common the word is",
+  "partOfSpeech": "noun / verb / adjective / adverb / etc.",
+  "exampleSentence": "a natural example sentence using the word",
+  "synonyms": ["up to 3 synonyms"],
+  "antonyms": ["up to 2 antonyms, empty array if none"]
+}
+
+IMPORTANT: Return ONLY the JSON, no markdown, no explanation.`,
+        },
+      ],
+      temperature: 0.3,
+      max_tokens: 400,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Groq API error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices[0]?.message?.content;
+
+  if (!content) {
+    throw new Error("No content in response");
+  }
+
+  return JSON.parse(content);
+}
+
+export async function reverseLookupWord(
+  word: string,
+  language: string = "hindi",
+): Promise<DictionaryEntry> {
+  const GROQ_API_KEY = await getGroqApiKey();
+
+  const langName =
+    language === "urdu" ? "Urdu (Roman Urdu)" :
+    language === "english" ? "English" :
+    "Hindi (Roman Hindi)";
+
+  const response = await fetch(GROQ_API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${GROQ_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "user",
+          content: `You are a dictionary. The user typed "${word}" which is a ${langName} word. Find the best matching English word for it.
+
+Return ONLY a valid JSON object:
+{
+  "word": "the English word",
+  "meaning": "the original ${langName} meaning / context",
+  "pronunciation": "phonetic pronunciation of the English word like 'uh-BRUPT'",
+  "level": "beginner or intermediate or advanced",
+  "partOfSpeech": "noun / verb / adjective / adverb / etc.",
+  "exampleSentence": "a natural English sentence using the word",
+  "synonyms": ["up to 3 English synonyms"],
+  "antonyms": ["up to 2 English antonyms, empty array if none"]
+}
+
+IMPORTANT: Return ONLY the JSON, no markdown, no explanation.`,
+        },
+      ],
+      temperature: 0.3,
+      max_tokens: 400,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Groq API error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices[0]?.message?.content;
+
+  if (!content) {
+    throw new Error("No content in response");
+  }
+
+  return JSON.parse(content);
+}
