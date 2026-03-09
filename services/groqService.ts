@@ -15,7 +15,7 @@ interface WordSuggestion {
   word: string;
   level: "beginner" | "intermediate" | "advanced";
   sentence: string;
-  conversationStarters: string[];
+  conversationStarter: string;
   hindiMeaning: string;
 }
 
@@ -44,6 +44,7 @@ interface RelatedWordsCluster {
 
 export async function analyzeImageWithGroq(
   base64Image: string,
+  userLevel: "beginner" | "intermediate" | "advanced" = "intermediate",
 ): Promise<WordSuggestion[]> {
   console.log("=== GROQ API DEBUG ===");
 
@@ -67,29 +68,40 @@ export async function analyzeImageWithGroq(
             content: [
               {
                 type: "text",
-                text: `Analyze this image and identify the main object. Then provide exactly 3 English vocabulary words related to this object at different difficulty levels (beginner, intermediate, advanced). For each word, create a natural example sentence AND 3 conversation starters that someone could actually use in real life when talking about this object. Also provide the Roman Hindi (Hindi written in English letters) translation for each word - use SIMPLE, COMMON Hindi words that everyday people use in conversation, NOT English words written in Hindi script or formal Sanskrit words.
+                text: `Analyze this image and identify the main object. Then provide exactly 3 English vocabulary words related to this object. The user's English level is "${userLevel}", so adjust word difficulty and sentence complexity accordingly:
+- beginner: simple everyday words, short easy sentences
+- intermediate: moderately challenging words, natural sentences
+- advanced: sophisticated vocabulary, complex sentences
 
-CRITICAL: Use actual Hindi vocabulary words, not English words transliterated. 
+For each word, create a natural example sentence AND 1 conversation starter that someone could actually use in real life. Also provide the Hindi meaning in Roman Hindi — the way Indians ACTUALLY speak in daily life. Think of how a person in Delhi, Mumbai, or any Indian city would say it casually.
 
-Examples of CORRECT translations:
-- curtain → "parda" (NOT "pat" or "curtain")
-- drapery → "parda" (NOT "pat ya drapery")
-- cup → "pyala" or "katori"
-- book → "kitab" or "pustak"
-- water → "pani"
-- food → "khana"
+CRITICAL HINDI RULES:
+- Write Hindi the way Indians naturally speak — use common Hinglish if that's more natural
+- Give a short, natural phrase or word — NOT a dictionary definition
+- If Indians commonly use the English word itself in conversation, mention it: e.g., "table" → "table (mez bhi bolte hain)"
+- Prefer the word that would come to mind FIRST for a Hindi speaker
+
+Examples of CORRECT natural Hindi translations:
+- curtain → "parda"
+- cup → "cup / pyaala"
+- book → "kitaab"
+- water → "paani"
+- food → "khaana"
 - big → "bada"
-- small → "chota"
+- small → "chhota"
 - window → "khidki"
-- door → "darwaza"
-- table → "mez"
+- door → "darwaaza"
+- table → "table / mez"
 - chair → "kursi"
+- beautiful → "khoobsurat"
+- remember → "yaad rakhna"
+- tired → "thaka hua"
 
 Return ONLY a valid JSON array in this exact format, no other text:
 [
-  {"word": "word1", "level": "beginner", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"], "hindiMeaning": "actual hindi word"},
-  {"word": "word2", "level": "intermediate", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"], "hindiMeaning": "actual hindi word"},
-  {"word": "word3", "level": "advanced", "sentence": "example sentence", "conversationStarters": ["starter1", "starter2", "starter3"], "hindiMeaning": "actual hindi word"}
+  {"word": "word1", "level": "beginner", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "natural hindi as Indians speak"},
+  {"word": "word2", "level": "intermediate", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "natural hindi as Indians speak"},
+  {"word": "word3", "level": "advanced", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "natural hindi as Indians speak"}
 ]`,
               },
               {
@@ -153,18 +165,16 @@ export async function predictConversationFlow(
             role: "user",
             content: `Someone says: "${conversationStarter}"
 
-Predict 3 likely responses they might get, and for each response, suggest a natural follow-up reply.
+Predict 1 most likely response they might get, and suggest a short, natural follow-up reply. Keep both response and follow-up concise (1 sentence each).
 
 Return ONLY a valid JSON array in this exact format, no other text:
 [
-  {"theirResponse": "response1", "yourFollowUp": "follow-up1"},
-  {"theirResponse": "response2", "yourFollowUp": "follow-up2"},
-  {"theirResponse": "response3", "yourFollowUp": "follow-up3"}
+  {"theirResponse": "short response", "yourFollowUp": "short follow-up"}
 ]`,
           },
         ],
         temperature: 0.8,
-        max_tokens: 400,
+        max_tokens: 200,
       }),
     });
 
@@ -253,39 +263,24 @@ export async function getRelatedWords(
             role: "user",
             content: `Given these words: ${words.join(", ")}
 
-Create 3 semantic clusters of related vocabulary that would help an English learner build deeper understanding. For each cluster, provide 4-5 related words with their relationship to the original words, a simple example, and the Roman Hindi (Hindi written in English letters) translation - use SIMPLE, COMMON Hindi words that everyday people use in conversation, NOT English words transliterated or formal Sanskrit words.
+Create 2 small clusters of related vocabulary. For each cluster, provide exactly 2 related words with their relationship, a short example, and the Hindi meaning in natural Roman Hindi (the way Indians actually speak in daily life).
 
-CRITICAL: Use actual Hindi vocabulary words, not English words written in Hindi script.
-
-Examples of CORRECT translations:
-- hot → "garam"
-- cold → "thanda"
-- big → "bada"
-- small → "chota"
-- new → "naya"
-- old → "purana"
-- beautiful → "sundar" or "khoobsurat"
-- clean → "saaf"
-- dirty → "ganda"
-- open → "khula"
-- closed → "band"
+HINDI RULES: Use the word Indians would actually say in conversation. If they commonly use the English word, say so.
 
 Return ONLY a valid JSON array in this exact format, no other text:
 [
   {
-    "category": "Category Name (e.g., 'Actions', 'Physical Properties', 'Related Objects')",
+    "category": "Category Name",
     "words": [
-      {"word": "related word", "relation": "how it relates (e.g., 'verb form', 'opposite', 'similar object')", "example": "simple example sentence", "hindiMeaning": "actual hindi word"},
-      {"word": "related word", "relation": "relationship", "example": "example", "hindiMeaning": "actual hindi word"}
+      {"word": "related word", "relation": "how it relates", "example": "short example", "hindiMeaning": "natural hindi"},
+      {"word": "related word", "relation": "relationship", "example": "short example", "hindiMeaning": "natural hindi"}
     ]
   }
-]
-
-Make the categories practical and useful for real conversations.`,
+]`,
           },
         ],
         temperature: 0.8,
-        max_tokens: 800,
+        max_tokens: 400,
       }),
     });
 
@@ -349,23 +344,22 @@ export async function generateMicroStory(
         messages: [
           {
             role: "user",
-            content: `You are a creative storyteller for English learners. Write a vivid, immersive micro-story (exactly 4-5 sentences) that naturally weaves ALL of these words into one relatable real-life scene: ${justWords}
+            content: `Write a short, vivid micro-story (exactly 2 sentences) using ALL of these words: ${justWords}
 
 Rules:
-- Make the scene feel like a moment the reader is LIVING through (use "you" perspective)
-- Bold each vocabulary word by wrapping it in **double asterisks**
-- After each bolded word, add the Hindi meaning in parentheses like: **bookmark** (panne ka nishan)
-- Use simple, everyday English — the story should feel effortless to read
-- Make the scene cozy, vivid, and emotionally engaging — the reader should FEEL the moment
-- Do NOT start with "You walk into" — be more creative with the opening
+- Use "you" perspective — make the reader feel the moment
+- Bold each vocabulary word with **double asterisks**
+- After each bolded word, add Hindi meaning in parentheses: **bookmark** (panne ka nishan)
+- Keep it simple and natural — easy to read quickly
+- Be creative with the opening
 
 Words with Hindi meanings: ${wordList}
 
-Return ONLY the story text, nothing else. No title, no label, no quotes around it.`,
+Return ONLY the story text, nothing else. No title, no label, no quotes.`,
           },
         ],
         temperature: 0.9,
-        max_tokens: 300,
+        max_tokens: 150,
       }),
     });
 

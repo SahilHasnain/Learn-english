@@ -9,6 +9,27 @@ export interface SavedWord {
 }
 
 const STORAGE_KEY = "@saved_words";
+const LEVEL_KEY = "@english_level";
+
+export type EnglishLevel = "beginner" | "intermediate" | "advanced";
+
+export async function getEnglishLevel(): Promise<EnglishLevel | null> {
+  try {
+    const level = await AsyncStorage.getItem(LEVEL_KEY);
+    return level as EnglishLevel | null;
+  } catch (error) {
+    console.error("Error getting English level:", error);
+    return null;
+  }
+}
+
+export async function saveEnglishLevel(level: EnglishLevel): Promise<void> {
+  try {
+    await AsyncStorage.setItem(LEVEL_KEY, level);
+  } catch (error) {
+    console.error("Error saving English level:", error);
+  }
+}
 
 export async function getSavedWords(): Promise<SavedWord[]> {
   try {

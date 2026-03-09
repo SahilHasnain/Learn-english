@@ -15,7 +15,7 @@ interface WordSuggestion {
   word: string;
   level: "beginner" | "intermediate" | "advanced";
   sentence: string;
-  conversationStarters: string[];
+  conversationStarter: string;
   hindiMeaning: string;
 }
 
@@ -185,8 +185,17 @@ export default function ResultsScreen() {
           </View>
         </View>
 
-        {/* Related Words Section */}
-        <RelatedWordsSection words={words} />
+        {/* Word Cards */}
+        {suggestions.map((item, index) => (
+          <WordCard
+            key={index}
+            word={item.word}
+            level={item.level}
+            sentence={item.sentence}
+            conversationStarter={item.conversationStarter}
+            hindiMeaning={item.hindiMeaning}
+          />
+        ))}
 
         {/* Micro Story */}
         <MicroStory
@@ -196,17 +205,8 @@ export default function ResultsScreen() {
           }))}
         />
 
-        {/* Word Cards */}
-        {suggestions.map((item, index) => (
-          <WordCard
-            key={index}
-            word={item.word}
-            level={item.level}
-            sentence={item.sentence}
-            conversationStarters={item.conversationStarters}
-            hindiMeaning={item.hindiMeaning}
-          />
-        ))}
+        {/* Related Words Section */}
+        <RelatedWordsSection words={words} />
 
         {/* Capture More Button */}
         <TouchableOpacity
