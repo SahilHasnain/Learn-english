@@ -79,9 +79,11 @@ export default function Index() {
         result={dictionary.result}
         loading={dictionary.loading}
         error={dictionary.error}
+        saved={dictionary.saved}
         onSearch={dictionary.search}
         onClose={dictionary.close}
         onToggleMode={dictionary.toggleMode}
+        onSave={dictionary.saveWord}
       />
 
       <OnboardingSheet
