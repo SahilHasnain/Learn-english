@@ -1,6 +1,4 @@
-import EnglishPracticeChat from "@/app/components/EnglishPracticeChat";
 import Flashback from "@/app/components/Flashback";
-import KeyboardSpacer from "@/app/components/KeyboardSpacer";
 import { getTodayStats } from "@/services/learningJourneyService";
 import {
   EnglishLevel,
@@ -49,7 +47,6 @@ const LEVEL_OPTIONS: {
 
 export default function Index() {
   const router = useRouter();
-  const [isChatModalVisible, setIsChatModalVisible] = useState(false);
   const [showLevelPicker, setShowLevelPicker] = useState(false);
   const [currentLevel, setCurrentLevel] = useState<EnglishLevel | null>(null);
   const [stats, setStats] = useState({
@@ -379,7 +376,7 @@ export default function Index() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => setIsChatModalVisible(true)}
+            onPress={() => router.push("/practice")}
             style={{
               backgroundColor: COLORS.accent.secondary,
               borderRadius: 16,
@@ -555,79 +552,6 @@ export default function Index() {
                 </TouchableOpacity>
               ))}
             </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Chat Modal */}
-      <Modal
-        visible={isChatModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setIsChatModalVisible(false)}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: COLORS.overlay.dark,
-            justifyContent: "flex-end",
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: COLORS.background.secondary,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              maxHeight: "85%",
-              paddingTop: SPACING.lg,
-            }}
-          >
-            {/* Modal Header */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                paddingHorizontal: SPACING.lg,
-                paddingBottom: SPACING.md,
-                borderBottomWidth: 1,
-                borderBottomColor: COLORS.border.subtle,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 20,
-                  fontWeight: "bold",
-                  color: COLORS.text.primary,
-                }}
-              >
-                English Practice
-              </Text>
-              <TouchableOpacity
-                onPress={() => setIsChatModalVisible(false)}
-                style={{
-                  width: 40,
-                  height: 40,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 20,
-                  backgroundColor: COLORS.background.tertiary,
-                }}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="close" size={24} color={COLORS.text.primary} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Modal Content */}
-            <ScrollView
-              style={{ padding: SPACING.lg }}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              <EnglishPracticeChat />
-              <KeyboardSpacer />
-            </ScrollView>
           </View>
         </View>
       </Modal>
