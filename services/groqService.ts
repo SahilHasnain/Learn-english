@@ -17,6 +17,7 @@ interface WordSuggestion {
   sentence: string;
   conversationStarter: string;
   hindiMeaning: string;
+  pronunciation: string;
 }
 
 interface ConversationFlow {
@@ -140,13 +141,21 @@ export async function analyzeImageWithGroq(
 
 For each word, create a natural example sentence AND 1 conversation starter that someone could actually use in real life.
 
+CONVERSATION STARTER RULES:
+- Make starters feel like real conversations in India/Pakistan — not generic Western small talk
+- Use situations common in South Asian daily life: chai, traffic, family gatherings, street food, weather, festivals, college, office
+- Examples: "This chai is really refreshing, isn't it?", "The traffic today was absolutely terrible"
+
 ${getMeaningLanguagePrompt(language)}
+
+Also provide a pronunciation hint — write how the word SOUNDS using simple Roman ${language === "urdu" ? "Urdu" : language === "english" ? "English" : "Hindi"} phonetics (NOT IPA). Capitalize the stressed syllable.
+Examples: "sophisticated" → "so-FIS-ti-kay-ted", "curtain" → "KUR-ten", "beautiful" → "BYOO-ti-ful"
 
 Return ONLY a valid JSON array in this exact format, no other text:
 [
-  {"word": "word1", "level": "beginner", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "${getMeaningFieldLabel(language)}"},
-  {"word": "word2", "level": "intermediate", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "${getMeaningFieldLabel(language)}"},
-  {"word": "word3", "level": "advanced", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "${getMeaningFieldLabel(language)}"}
+  {"word": "word1", "level": "beginner", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "${getMeaningFieldLabel(language)}", "pronunciation": "phonetic hint"},
+  {"word": "word2", "level": "intermediate", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "${getMeaningFieldLabel(language)}", "pronunciation": "phonetic hint"},
+  {"word": "word3", "level": "advanced", "sentence": "example sentence", "conversationStarter": "one natural starter", "hindiMeaning": "${getMeaningFieldLabel(language)}", "pronunciation": "phonetic hint"}
 ]`,
               },
               {
@@ -159,7 +168,7 @@ Return ONLY a valid JSON array in this exact format, no other text:
           },
         ],
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 600,
       }),
     });
 
@@ -242,8 +251,39 @@ Return ONLY a valid JSON array in this exact format, no other text:
   }
 }
 
+function getL1MistakeContext(language: string): string {
+  if (language === "urdu" || language === "hindi") {
+    return `
+COMMON MISTAKES by ${language === "hindi" ? "Hindi" : "Urdu"} speakers (check for these specifically):
+- Missing articles: "I went to market" → "I went to THE market" (${language === "hindi" ? "Hindi" : "Urdu"} has no a/the)
+- Wrong prepositions: "I am in the bus" → "I am ON the bus", "married with" → "married to"
+- Tense confusion: "I am go" → "I am going", "He don't" → "He doesn't"
+- Direct translations: "What is your good name?" → "What is your name?", "I have a doubt" → "I have a question"
+- Wrong word order: "I yesterday went" → "I went yesterday"
+- Missing 'to' with infinitive: "I want go" → "I want TO go"
+- Redundant words: "return back" → "return", "revert back" → "revert"
+- "Myself" misuse: "Myself Rahul" → "I am Rahul"`;
+  }
+  return "";
+}
+
+function getExplanationLanguageInstruction(language: string): string {
+  if (language === "hindi") {
+    return `Write the explanation in simple Roman Hindi (Hinglish) so the learner actually understands WHY.
+Example: "'am go' galat hai — 'am' ke baad '-ing' lagta hai, toh 'am going' sahi hoga."
+Keep it conversational, like a friend explaining.`;
+  }
+  if (language === "urdu") {
+    return `Write the explanation in simple Roman Urdu so the learner actually understands WHY.
+Example: "'am go' ghalat hai — 'am' ke baad '-ing' lagana hota hai, toh 'am going' sahi hai."
+Keep it conversational, like a friend explaining.`;
+  }
+  return "Write the explanation in simple, clear English.";
+}
+
 export async function fixEnglishMistakes(
   userText: string,
+  language: string = "hindi",
 ): Promise<MistakeFix> {
   try {
     const GROQ_API_KEY = await getGroqApiKey();
@@ -258,16 +298,19 @@ export async function fixEnglishMistakes(
         messages: [
           {
             role: "user",
-            content: `The user wants to say: "${userText}"
+            content: `The user is a ${language === "hindi" ? "Hindi" : language === "urdu" ? "Urdu" : "English"} speaker learning English. They want to say: "${userText}"
+${getL1MistakeContext(language)}
 
 If there are grammar mistakes, awkward phrasing, or unnatural English, rewrite it to sound fluent and natural. Then explain what was wrong and why your version is better. If it's already perfect, say so.
 
+${getExplanationLanguageInstruction(language)}
+
 Return ONLY a valid JSON object in this exact format, no other text:
-{"original": "${userText}", "corrected": "corrected version or same if perfect", "explanation": "brief explanation of changes or 'Perfect! No changes needed.'"}`,
+{"original": "${userText}", "corrected": "corrected version or same if perfect", "explanation": "brief explanation in ${language === "english" ? "English" : language === "urdu" ? "Roman Urdu" : "Roman Hindi"}"}`,
           },
         ],
         temperature: 0.7,
-        max_tokens: 300,
+        max_tokens: 400,
       }),
     });
 
@@ -399,6 +442,7 @@ Rules:
 - After each bolded word, add ${language === "english" ? "simple English meaning" : language === "urdu" ? "Roman Urdu meaning" : "Hindi meaning"} in parentheses: **bookmark** (${language === "english" ? "a saved page marker" : language === "urdu" ? "nishaan" : "panne ka nishan"})
 - Keep it simple and natural — easy to read quickly
 - Be creative with the opening
+${language !== "english" ? `- Naturally mix in 1-2 casual ${language === "urdu" ? "Urdu" : "Hindi"} words/phrases where a bilingual person would (code-switching), like: "bilkul filmy scene" or "ekdum perfect"` : ""}
 
 Words with meanings: ${wordList}
 
@@ -477,6 +521,79 @@ Return ONLY the sentence, nothing else. No quotes, no label, no explanation.`,
     return content.trim().replace(/^["']|["']$/g, "");
   } catch (error) {
     console.error("Error generating flashback:", error);
+    throw error;
+  }
+}
+
+interface ReverseChallenge {
+  prompt: string;
+  hint: string;
+  answer: string;
+}
+
+export async function generateReverseChallenge(
+  language: string = "hindi",
+): Promise<ReverseChallenge> {
+  try {
+    const GROQ_API_KEY = await getGroqApiKey();
+    const langName =
+      language === "urdu"
+        ? "Urdu"
+        : language === "english"
+          ? "English"
+          : "Hindi";
+    const script =
+      language === "urdu"
+        ? "Roman Urdu"
+        : language === "english"
+          ? "English"
+          : "Roman Hindi";
+
+    const response = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "user",
+            content: `Generate a simple ${language === "english" ? "English" : langName} sentence that an English learner should translate INTO English.
+
+Rules:
+- The sentence should be something from daily life — ordering food, asking directions, talking to a friend
+- Write it in ${script}${language !== "english" ? " (NOT in Devanagari or Nastaliq script)" : ""}
+- Give a short hint (1-2 key English words that help)
+- Provide the correct English translation
+
+${language === "hindi" ? 'Example: {"prompt": "Mujhe ek cup chai chahiye", "hint": "cup, tea, want", "answer": "I want a cup of tea"}' : language === "urdu" ? '{"prompt": "Mujhe ek cup chai chahiye", "hint": "cup, tea, want", "answer": "I want a cup of tea"}' : 'Example: {"prompt": "Tell someone you want tea", "hint": "want, cup, tea", "answer": "I would like a cup of tea"}'}
+
+Return ONLY a valid JSON object, no other text:
+{"prompt": "sentence in ${script}", "hint": "key english words", "answer": "correct english translation"}`,
+          },
+        ],
+        temperature: 0.9,
+        max_tokens: 200,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Groq API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content;
+
+    if (!content) {
+      throw new Error("No content in response");
+    }
+
+    return JSON.parse(content);
+  } catch (error) {
+    console.error("Error generating reverse challenge:", error);
     throw error;
   }
 }

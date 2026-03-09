@@ -10,6 +10,7 @@ interface WordCardProps {
   sentence: string;
   conversationStarter: string;
   hindiMeaning: string;
+  pronunciation?: string;
 }
 
 export default function WordCard({
@@ -18,6 +19,7 @@ export default function WordCard({
   sentence,
   conversationStarter,
   hindiMeaning,
+  pronunciation,
 }: WordCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -135,6 +137,18 @@ export default function WordCard({
             >
               {hindiMeaning}
             </Text>
+            {pronunciation && (
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: COLORS.accent.primary,
+                  marginTop: 2,
+                  letterSpacing: 0.5,
+                }}
+              >
+                🔊 {pronunciation}
+              </Text>
+            )}
           </View>
         </View>
 

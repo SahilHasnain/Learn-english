@@ -388,7 +388,7 @@ export default function Index() {
         {stats.totalWords > 0 && <Flashback />}
 
         {/* Action Buttons */}
-        <View style={{ gap: SPACING.md, marginTop: SPACING.md }}>
+        <View style={{ gap: SPACING.sm, marginTop: SPACING.md }}>
           <Link href="/camera" asChild>
             <TouchableOpacity
               style={{
@@ -416,67 +416,71 @@ export default function Index() {
             </TouchableOpacity>
           </Link>
 
-          <TouchableOpacity
-            onPress={() => router.push("/journey")}
-            style={{
-              backgroundColor: COLORS.background.tertiary,
-              borderRadius: 16,
-              padding: 16,
-              alignItems: "center",
-              flexDirection: "row",
-              justifyContent: "center",
-              borderWidth: 1,
-              borderColor: COLORS.border.primary,
-              ...SHADOWS.sm,
-            }}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name="map-outline"
-              size={24}
-              color={COLORS.accent.primary}
-            />
-            <Text
+          <View style={{ flexDirection: "row", gap: SPACING.sm }}>
+            <TouchableOpacity
+              onPress={() => router.push("/journey")}
               style={{
-                color: COLORS.text.primary,
-                fontWeight: "600",
-                fontSize: 18,
-                marginLeft: 12,
+                flex: 1,
+                backgroundColor: COLORS.background.tertiary,
+                borderRadius: 14,
+                paddingVertical: 12,
+                alignItems: "center",
+                flexDirection: "row",
+                justifyContent: "center",
+                borderWidth: 1,
+                borderColor: COLORS.border.secondary,
               }}
+              activeOpacity={0.8}
             >
-              Learning Journey
-            </Text>
-          </TouchableOpacity>
+              <Ionicons
+                name="map-outline"
+                size={18}
+                color={COLORS.accent.primary}
+              />
+              <Text
+                style={{
+                  color: COLORS.text.secondary,
+                  fontWeight: "600",
+                  fontSize: 14,
+                  marginLeft: 8,
+                }}
+              >
+                Journey
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => router.push("/practice")}
-            style={{
-              backgroundColor: COLORS.accent.secondary,
-              borderRadius: 16,
-              padding: 16,
-              alignItems: "center",
-              flexDirection: "row",
-              justifyContent: "center",
-              ...SHADOWS.md,
-            }}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name="chatbubbles"
-              size={24}
-              color={COLORS.text.primary}
-            />
-            <Text
+            <TouchableOpacity
+              onPress={() => router.push("/practice")}
               style={{
-                color: COLORS.text.primary,
-                fontWeight: "600",
-                fontSize: 18,
-                marginLeft: 12,
+                flex: 1,
+                backgroundColor: COLORS.background.tertiary,
+                borderRadius: 14,
+                paddingVertical: 12,
+                alignItems: "center",
+                flexDirection: "row",
+                justifyContent: "center",
+                borderWidth: 1,
+                borderColor: COLORS.border.secondary,
               }}
+              activeOpacity={0.8}
             >
-              Practice English
-            </Text>
-          </TouchableOpacity>
+              <Ionicons
+                name="chatbubbles-outline"
+                size={18}
+                color={COLORS.accent.secondary}
+              />
+              <Text
+                style={{
+                  color: COLORS.text.secondary,
+                  fontWeight: "600",
+                  fontSize: 14,
+                  marginLeft: 8,
+                }}
+              >
+                Practice
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Bottom Spacing */}

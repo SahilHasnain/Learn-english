@@ -17,6 +17,7 @@ interface WordSuggestion {
   sentence: string;
   conversationStarter: string;
   hindiMeaning: string;
+  pronunciation?: string;
 }
 
 export default function ResultsScreen() {
@@ -194,6 +195,7 @@ export default function ResultsScreen() {
             sentence={item.sentence}
             conversationStarter={item.conversationStarter}
             hindiMeaning={item.hindiMeaning}
+            pronunciation={item.pronunciation}
           />
         ))}
 
