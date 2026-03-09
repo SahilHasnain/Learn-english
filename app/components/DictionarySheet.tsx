@@ -156,7 +156,7 @@ export function DictionarySheet({
 
           {/* Content */}
           <ScrollView
-            style={{ padding: SPACING.lg }}
+            style={{ padding: SPACING.lg, paddingBottom: SPACING.xxl }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >

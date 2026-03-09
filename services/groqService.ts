@@ -639,9 +639,9 @@ Return ONLY a valid JSON object with these fields:
   "pronunciation": "phonetic pronunciation hint like 'uh-BRUPT'",
   "level": "beginner or intermediate or advanced — based on how common the word is",
   "partOfSpeech": "noun / verb / adjective / adverb / etc.",
-  "exampleSentence": "a natural example sentence using the word",
-  "synonyms": ["up to 3 synonyms"],
-  "antonyms": ["up to 2 antonyms, empty array if none"]
+  "exampleSentence": "a natural ENGLISH example sentence using the word",
+  "synonyms": ["up to 3 English synonyms"],
+  "antonyms": ["up to 2 English antonyms, empty array if none"]
 }
 
 IMPORTANT: Return ONLY the JSON, no markdown, no explanation.`,
